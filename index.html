@@ -1,0 +1,2213 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#1976D2" />
+  <title>Medidas de Silos + Convertidor de Mezclas</title>
+
+  <style>
+    :root{
+      --primary:#1976D2;
+      --primary-hover:#1565c0;
+      --bg2:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#d7dde6;
+      --error:#c62828;
+      --ok:#1b5e20;
+      --shadow: 0 12px 35px rgba(2, 6, 23, 0.10);
+      --radius: 14px;
+      --s8:8px; --s12:12px; --s16:16px; --s20:20px;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background: linear-gradient(135deg, #f7fbff 0%, #e8f0fb 100%);
+      padding: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    }
+
+    header{margin-bottom: 16px;}
+    h1{margin:0;color:var(--primary);font-size:1.6rem;letter-spacing:-0.02em;}
+    .subtitle{margin:8px 0 0;color:var(--muted);line-height:1.35}
+
+    main{display:grid;gap:16px}
+
+    .card{
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--s20);
+    }
+
+    .card h2{margin:0;font-size:1.05rem}
+    .muted{margin:6px 0 0;color:var(--muted);font-size:0.95rem;line-height:1.35}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .col-12{grid-column: span 12;}
+    .col-6{grid-column: span 6;}
+
+    .field{display:flex;flex-direction:column;gap:8px;}
+    label{font-weight:900;font-size:0.93rem}
+    .help{margin:0;color:var(--muted);font-size:0.88rem;line-height:1.35}
+
+    input,select,button{
+      font-family: var(--font);
+      font-size: 16px;
+    }
+
+    select, input{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fbfcfe;
+      position: relative;
+      z-index: 2;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    select{
+      background-image:
+        linear-gradient(45deg, transparent 50%, #0f172a 50%),
+        linear-gradient(135deg, #0f172a 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(1em + 2px),
+        calc(100% - 13px) calc(1em + 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 36px;
+    }
+
+    input:focus, select:focus, button:focus{
+      outline:none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(25,118,210,0.16);
+    }
+
+    .invalid{
+      border-color: rgba(198,40,40,0.55) !important;
+      box-shadow: 0 0 0 4px rgba(198,40,40,0.12) !important;
+      background:#fff7f7;
+    }
+
+    .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+    button{
+      border:none;border-radius:12px;padding:12px 14px;
+      cursor:pointer;font-weight:950;touch-action:manipulation;
+    }
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-hover)}
+    .btn-secondary{background:#f3f6fb;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+
+    .alert{
+      border-radius:12px;padding:12px 14px;border:1px solid var(--border);
+      background:#fafcff;font-size:0.92rem;line-height:1.35;margin-top:12px;
+    }
+    .alert.error{border-color: rgba(198,40,40,0.35); background: rgba(198,40,40,0.07);}
+    .alert.ok{border-color: rgba(27,94,32,0.25); background: rgba(27,94,32,0.06);}
+    .alert strong{font-weight:950}
+
+    .result{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .result.active{display:block}
+
+    .metrics{
+      display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:12px;
+    }
+    .metric{
+      grid-column: span 3;
+      border:1px solid #d8eef7;
+      background: linear-gradient(135deg, #f4fbfe 0%, #f7fbff 100%);
+      border-radius:12px;padding:16px;min-height:74px;
+    }
+    .metric .k{color:var(--muted);font-size:0.85rem;margin-bottom:4px}
+    .metric .v{font-weight:950;font-size:1.05rem}
+    .metric .sub{margin-top:4px;font-size:0.85rem;color:var(--muted);font-family:var(--mono)}
+
+    details.card{padding:0;overflow:hidden}
+    details.card>summary{
+      list-style:none;cursor:pointer;padding:20px;user-select:none
+    }
+    details.card>summary::-webkit-details-marker{display:none}
+    .summary-row{display:flex;justify-content:space-between;gap:12px}
+    .chev{
+      width:14px;height:14px;border-right:2px solid var(--muted);
+      border-bottom:2px solid var(--muted);transform:rotate(45deg);margin-top:6px;
+      transition:transform .15s;
+    }
+    details[open] .chev{transform:rotate(225deg)}
+    .details-body{padding:0 20px 20px;border-top:1px solid var(--border)}
+
+    .bottom-bar{
+      position:fixed;left:0;right:0;bottom:0;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,0.96);
+      border-top:1px solid var(--border);
+      display:flex;gap:12px;z-index:99;
+    }
+    .bottom-bar button{flex:1;padding:14px;border-radius:14px}
+
+    footer{
+      margin-top:16px;text-align:center;color:var(--muted);font-size:0.9rem;
+      padding:16px 0;border-top:1px solid var(--border);
+    }
+
+    @media (max-width: 920px){
+      .col-6{grid-column: span 12;}
+      .metric{grid-column: span 6;}
+    }
+    @media (min-width: 900px){
+      .container{padding-bottom:0}
+      .bottom-bar{display:none}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Medidas de Silos + Convertidor de Mezclas</h1>
+        <p class="subtitle">
+          Calcula por <strong>ecuación</strong> (silos 1–38) o por <strong>tabla</strong> (39, 41–42, 43–46).
+          Incluye <strong>Altura</strong>, <strong>Litros</strong>, <strong>Vacío</strong>, traslados y conversión de mezclas (2 y 3 componentes).
+        </p>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- 1) Selección y cálculo -->
+      <details class="card" id="detailsCalc" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>1) Selección y cálculo</h2>
+              <p class="muted">Elige el silo, el modo y escribe un valor.</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+
+        <div class="details-body">
+          <div class="grid">
+            <div class="field col-6">
+              <label for="silo">Silo</label>
+              <select id="silo"></select>
+              <p class="help" id="siloMeta">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="modo">Modo de cálculo</label>
+              <select id="modo">
+                <option value="altura">Altura (cm) → Litros</option>
+                <option value="litros">Litros → Altura (cm)</option>
+                <option value="vacio">Vacío (cm) → Litros</option>
+              </select>
+              <p class="help" id="modoHelp">—</p>
+            </div>
+
+            <div class="field col-12">
+              <label id="valorLabel" for="valor">Valor</label>
+              <input id="valor" type="text" inputmode="decimal" enterkeyhint="done" placeholder="Ej: 50" />
+              <p class="help" id="rango">—</p>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="btn-primary" id="btnCalcular" type="button">Guardar</button>
+            <button class="btn-secondary" id="btnLimpiar" type="button">Limpiar</button>
+          </div>
+
+          <div class="alert error" id="alertError" hidden></div>
+
+          <div class="result" id="resultado" aria-live="polite">
+            <div class="alert">
+              <strong id="resTitulo">Resultado</strong>
+              <div class="help" id="resSubtitulo" style="margin-top:6px;">—</div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">Altura (cm)</div>
+                <div class="v" id="outAltura">—</div>
+                <div class="sub" id="outAlturaSub">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">Litros (L)</div>
+                <div class="v" id="outLitros">—</div>
+                <div class="sub" id="outLitrosSub">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">Vacío (cm)</div>
+                <div class="v" id="outVacio">—</div>
+                <div class="sub" id="outVacioSub">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">% de capacidad</div>
+                <div class="v" id="outPct">—</div>
+                <div class="sub" id="outPctSub">—</div>
+              </div>
+            </div>
+
+            <div class="help" id="toast" style="margin-top:12px;color:var(--muted);"></div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 2) Tabla / ecuación -->
+      <details class="card" id="detailsTable" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>2) Tabla / ecuación del silo seleccionado</h2>
+              <p class="muted">Se puede plegar para ahorrar espacio.</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div id="tablaDatos"></div>
+        </div>
+      </details>
+
+      <!-- 3) Traslados -->
+      <details class="card" id="detailsMove" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>3) Cálculo de litros (traslados)</h2>
+              <p class="muted">Escribe medidas (cm) o litros, y calcula traslado y descarga.</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+        <div class="details-body">
+
+          <div class="alert">
+            <strong>Fórmulas (actualizadas)</strong><br>
+            <span style="color:var(--muted)">
+              Trasladado = (S final − S inicial) + Entregado<br>
+              Descargado (nuevo) = (P ini + S ini) − (P fin + S fin) + Entregado
+            </span>
+          </div>
+
+          <div class="grid">
+            <div class="field col-6">
+              <label for="pSilo">Silo primario</label>
+              <select id="pSilo"></select>
+              <p class="help" id="pMeta">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="pTipo">Medida primario</label>
+              <select id="pTipo">
+                <option value="altura">Altura (cm)</option>
+                <option value="vacio">Vacío (cm)</option>
+                <option value="litros">Litros (L)</option>
+              </select>
+              <p class="help" id="pTipoHelp">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="pIni">Primario inicial</label>
+              <input id="pIni" type="text" inputmode="decimal" placeholder="Ej: 120" />
+            </div>
+
+            <div class="field col-6">
+              <label for="pFin">Primario final</label>
+              <input id="pFin" type="text" inputmode="decimal" placeholder="Ej: 110" />
+            </div>
+
+            <div class="field col-6">
+              <label for="sSilo">Silo secundario</label>
+              <select id="sSilo"></select>
+              <p class="help" id="sMeta">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="sTipo">Medida secundario</label>
+              <select id="sTipo">
+                <option value="altura">Altura (cm)</option>
+                <option value="vacio">Vacío (cm)</option>
+                <option value="litros">Litros (L)</option>
+              </select>
+              <p class="help" id="sTipoHelp">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="sIni">Secundario inicial</label>
+              <input id="sIni" type="text" inputmode="decimal" placeholder="Ej: 90" />
+            </div>
+
+            <div class="field col-6">
+              <label for="sFin">Secundario final</label>
+              <input id="sFin" type="text" inputmode="decimal" placeholder="Ej: 100" />
+            </div>
+
+            <div class="field col-12">
+              <label for="entrego">Se entregó (L)</label>
+              <input id="entrego" type="text" inputmode="decimal" placeholder="Ej: 4500" />
+              <p class="help">Litros que salieron del secundario (ventas/consumo/producción).</p>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="btn-primary" id="btnMoveCalc" type="button">Calcular</button>
+            <button class="btn-secondary" id="btnMoveClear" type="button">Limpiar</button>
+          </div>
+
+          <div class="alert error" id="moveError" hidden></div>
+
+          <div class="result" id="moveResult" aria-live="polite">
+            <div class="alert ok">
+              <strong>Resultado</strong>
+              <div class="help" id="moveSub" style="margin-top:6px;">—</div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">Trasladado al secundario</div>
+                <div class="v" id="outTras">—</div>
+                <div class="sub">L</div>
+              </div>
+              <div class="metric">
+                <div class="k">Descargado al primario</div>
+                <div class="v" id="outDesc">—</div>
+                <div class="sub">L</div>
+              </div>
+              <div class="metric">
+                <div class="k">Primario (L inicial → final)</div>
+                <div class="v" id="outPL">—</div>
+                <div class="sub" id="outPLSub">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">Secundario (L inicial → final)</div>
+                <div class="v" id="outSL">—</div>
+                <div class="sub" id="outSLSub">—</div>
+              </div>
+            </div>
+
+            <div class="help" id="moveToast" style="margin-top:12px;color:var(--muted);"></div>
+          </div>
+
+        </div>
+      </details>
+
+      <!-- ======= Punto 3 • Traslados (solo litros) ======= -->
+      <details class="card" id="detailsP3" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>Punto 3 • Cálculo de litros (Traslados) — solo litros</h2>
+              <p class="muted">Entradas en litros. Calcula Trasladado y Descargado (lógica nueva).</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+
+        <div class="details-body">
+          <div class="alert">
+            <strong>Fórmulas</strong><br>
+            <span style="color:var(--muted)">
+              Trasladado = (S final − S inicial) + Entregado<br>
+              Descargado (nuevo) = (P ini + S ini) − (P fin + S fin) + Entregado
+            </span>
+          </div>
+
+          <div class="grid">
+            <div class="field col-6">
+              <label for="p3_pIniL">Primario inicial (L)</label>
+              <input id="p3_pIniL" type="text" inputmode="decimal" placeholder="Ej: 12000" />
+            </div>
+            <div class="field col-6">
+              <label for="p3_pFinL">Primario final (L)</label>
+              <input id="p3_pFinL" type="text" inputmode="decimal" placeholder="Ej: 8000" />
+            </div>
+
+            <div class="field col-6">
+              <label for="p3_sIniL">Secundario inicial (L)</label>
+              <input id="p3_sIniL" type="text" inputmode="decimal" placeholder="Ej: 3000" />
+            </div>
+            <div class="field col-6">
+              <label for="p3_sFinL">Secundario final (L)</label>
+              <input id="p3_sFinL" type="text" inputmode="decimal" placeholder="Ej: 9000" />
+            </div>
+
+            <div class="field col-12">
+              <label for="p3_entrego">Se entregó (L)</label>
+              <input id="p3_entrego" type="text" inputmode="decimal" placeholder="Ej: 4500 (si vacío, toma 0)" />
+              <p class="help">Litros que salieron del secundario (ventas/consumo/producción).</p>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="btn-primary" id="p3_btnCalc" type="button">Calcular</button>
+            <button class="btn-secondary" id="p3_btnClear" type="button">Limpiar</button>
+          </div>
+
+          <div class="alert error" id="p3_err" hidden></div>
+
+          <div class="result" id="p3_res" aria-live="polite">
+            <div class="alert ok">
+              <strong>Resultado</strong>
+              <div class="help" id="p3_sub" style="margin-top:6px;">—</div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">Trasladado al secundario</div>
+                <div class="v" id="p3_outTras">—</div>
+                <div class="sub">L</div>
+              </div>
+
+              <div class="metric">
+                <div class="k">Descargado al primario</div>
+                <div class="v" id="p3_outDesc">—</div>
+                <div class="sub">L (lógica nueva)</div>
+              </div>
+
+              <div class="metric">
+                <div class="k">Primario (L ini → fin)</div>
+                <div class="v" id="p3_outP">—</div>
+                <div class="sub">—</div>
+              </div>
+
+              <div class="metric">
+                <div class="k">Secundario (L ini → fin)</div>
+                <div class="v" id="p3_outS">—</div>
+                <div class="sub">—</div>
+              </div>
+            </div>
+
+            <div class="help" id="p3_toast" style="margin-top:12px;color:var(--muted);"></div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 4) Convertidor de Mezclas (2 y 3) -->
+      <details class="card" id="detailsMix" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>4) Convertidor de Mezclas (2 y 3 componentes)</h2>
+              <p class="muted">Acepta A/B 60/40 o A/B/C 50/30/20. Solo permite adicionar. Si no cabe: calcula cuánto sacar y cuánto agregar.</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+
+        <div class="details-body">
+          <div class="alert">
+            <strong>Ejemplos</strong><br>
+            <span style="color:var(--muted)">
+              2 comp: <span style="font-family:var(--mono)">Satinado 507/Satinado 508 60/40</span><br>
+              3 comp: <span style="font-family:var(--mono)">ProdA/ProdB/ProdC 60/30/10</span>
+            </span>
+          </div>
+
+          <div class="grid">
+            <div class="field col-12">
+              <label for="mx_nowName">Mezcla ACTUAL (nombre)</label>
+              <input id="mx_nowName" type="text" placeholder="Ej: Satinado 507/Satinado 508 60/40" />
+              <p class="help" id="mx_nowHelp">—</p>
+            </div>
+
+            <div class="field col-12">
+              <label for="mx_tgtName">Mezcla OBJETIVO (nombre)</label>
+              <input id="mx_tgtName" type="text" placeholder="Ej: Satinado 507/Satinado 508 80/20" />
+              <p class="help" id="mx_tgtHelp">—</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="mx_T">Litros actuales en el silo</label>
+              <input id="mx_T" type="text" inputmode="decimal" placeholder="Ej: 800" />
+              <p class="help">Total de litros que ya están mezclados.</p>
+            </div>
+
+            <div class="field col-6">
+              <label for="mx_C">Capacidad máxima del silo (opcional)</label>
+              <input id="mx_C" type="text" inputmode="decimal" placeholder="Ej: 1800" />
+              <p class="help">Si lo dejas vacío, asume que sí puedes agregar lo necesario.</p>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="btn-primary" id="mx_btnCalc" type="button">Calcular</button>
+            <button class="btn-secondary" id="mx_btnClear" type="button">Limpiar</button>
+          </div>
+
+          <div class="alert error" id="mx_err" hidden></div>
+
+          <div class="result" id="mx_res" aria-live="polite">
+            <div class="alert ok">
+              <strong id="mx_title">Resultado</strong>
+              <div class="help" id="mx_sub" style="margin-top:6px;">—</div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">Sacar mezcla</div>
+                <div class="v" id="mx_outRemove">—</div>
+                <div class="sub">L (mezcla homogénea)</div>
+              </div>
+
+              <div class="metric" id="mx_mAddSingle" style="display:none">
+                <div class="k">Agregar (individual)</div>
+                <div class="v" id="mx_outAdd">—</div>
+                <div class="sub" id="mx_outAddWho">—</div>
+              </div>
+
+              <div class="metric" id="mx_mAddA" style="display:none">
+                <div class="k">Agregar A</div>
+                <div class="v" id="mx_addA">—</div>
+                <div class="sub" id="mx_addAName">—</div>
+              </div>
+              <div class="metric" id="mx_mAddB" style="display:none">
+                <div class="k">Agregar B</div>
+                <div class="v" id="mx_addB">—</div>
+                <div class="sub" id="mx_addBName">—</div>
+              </div>
+              <div class="metric" id="mx_mAddC" style="display:none">
+                <div class="k">Agregar C</div>
+                <div class="v" id="mx_addC">—</div>
+                <div class="sub" id="mx_addCName">—</div>
+              </div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">Total final</div>
+                <div class="v" id="mx_outFinalT">—</div>
+                <div class="sub">L</div>
+              </div>
+              <div class="metric">
+                <div class="k">Composición final</div>
+                <div class="v" id="mx_outFinalComp">—</div>
+                <div class="sub" id="mx_outFinalCompSub">—</div>
+              </div>
+              <div class="metric" id="mx_mFinalA" style="display:none">
+                <div class="k">Final A (L)</div>
+                <div class="v" id="mx_finalA">—</div>
+                <div class="sub">L</div>
+              </div>
+              <div class="metric" id="mx_mFinalB" style="display:none">
+                <div class="k">Final B (L)</div>
+                <div class="v" id="mx_finalB">—</div>
+                <div class="sub">L</div>
+              </div>
+            </div>
+
+            <div class="alert" id="mx_steps" style="margin-top:12px;"></div>
+          </div>
+
+          <details class="card" style="margin-top:14px;">
+            <summary>
+              <div class="summary-row">
+                <div>
+                  <strong>Explicación (rápida)</strong>
+                  <div class="muted" style="margin-top:6px;">Se puede plegar.</div>
+                </div>
+                <div class="chev" aria-hidden="true"></div>
+              </div>
+            </summary>
+            <div class="details-body">
+              <div class="alert">
+                <strong>Regla</strong><br>
+                <span style="color:var(--muted)">
+                  - En 2 componentes, siempre agregas 1 (A o B).<br>
+                  - En 3 componentes, puedes necesitar agregar 1, 2 o los 3.<br>
+                  - Si no cabe o hay que bajar algo, se <strong>saca mezcla</strong> (sale con el % actual) y luego se agrega lo faltante.
+                </span>
+              </div>
+            </div>
+          </details>
+
+        </div>
+      </details>
+
+      <!-- 5) Histórico -->
+      <details class="card" id="detailsHistory" open>
+        <summary>
+          <div class="summary-row">
+            <div>
+              <h2>5) Histórico</h2>
+              <p class="muted">Se guarda localmente en este dispositivo.</p>
+            </div>
+            <div class="chev" aria-hidden="true"></div>
+          </div>
+        </summary>
+        <div class="details-body">
+          <div id="historial"></div>
+          <div class="btns" style="margin-top:12px;">
+            <button class="btn-secondary" id="btnHistCopy" type="button">📋 Copiar</button>
+            <button class="btn-secondary" id="btnHistCsv" type="button">⬇️ CSV</button>
+            <button class="btn-ghost" id="btnHistClear" type="button">Limpiar</button>
+          </div>
+        </div>
+      </details>
+
+    </main>
+
+    <footer>
+      © <span id="anio"></span> – Desarrollado por <strong>Andres Felipe Gonzalez Espindola</strong>
+    </footer>
+  </div>
+
+  <div class="bottom-bar" aria-label="Acciones rápidas">
+    <button class="btn-primary" id="btnCalcularBottom" type="button">Guardar</button>
+    <button class="btn-secondary" id="btnLimpiarBottom" type="button">Limpiar</button>
+  </div>
+
+  <!-- =========================
+       SCRIPT PRINCIPAL (SILOS / TRASLADOS / HISTÓRICO)
+       ========================= -->
+  <script>
+    (function(){
+      "use strict";
+
+      const MAX_HIST = 20;
+      const LS_STATE = "silocalc_state_v6";
+      const LS_HIST  = "silocalc_history_v6";
+
+      const DEFAULT_MAXH_1_36 = 187.5;
+      const MAXH_24_26 = 143.5;
+      const MAXH_37_38 = 226;
+      const MAXH_39 = 124;
+
+      const FORMULAS = {
+        1:  { a: 24.535, b: 174.31 },
+        2:  { a: 24.422, b: 181.95 },
+        3:  { a: 24.664, b: 169.44 },
+        4:  { a: 24.303, b: 182.47 },
+        5:  { a: 24.300, b: 86.481 },
+        6:  { a: 24.276, b: 171.59 },
+        7:  { a: 24.291, b: 164.46 },
+        8:  { a: 24.293, b: 145.12 },
+        9:  { a: 24.174, b: 167.54 },
+        10: { a: 24.925, b: 187.92 },
+        11: { a: 24.293, b: 183.14 },
+        12: { a: 17.808, b: 96.341 },
+        13: { a: 24.306, b: 182.33 },
+        14: { a: 18.182, b: 89.471 },
+        15: { a: 24.306, b: 182.33 },
+        16: { a: 24.185, b: 194.14 },
+        17: { a: 24.306, b: 182.33 },
+        18: { a: 18.182, b: 89.471 },
+        19: { a: 24.099, b: 151.20 },
+        20: { a: 18.095, b: 102.40 },
+        21: { a: 24.306, b: 182.33 },
+        22: { a: 18.182, b: 89.471 },
+        23: { a: 24.306, b: 182.33 },
+        24: { a: 14.969, b: 206.46 },
+        25: { a: 24.306, b: 182.33 },
+        26: { a: 14.938, b: 199.93 },
+        27: { a: 17.820, b: 94.669 },
+        28: { a: 17.820, b: 94.669 },
+        29: { a: 18.102, b: 114.01 },
+        30: { a: 24.925, b: 187.92 },
+        31: { a: 24.925, b: 187.92 },
+        32: { a: 24.926, b: 187.92 },
+        33: { a: 18.110, b: 115.49 },
+        34: { a: 24.925, b: 187.92 },
+        35: { a: 24.206, b: 208.51 },
+        36: { a: 24.302, b: 194.66 },
+        37: { a: 29.461, b: 255.12 },
+        38: { a: 29.461, b: 255.12 }
+      };
+
+      function maxHForSilo(n){
+        if (n === 24 || n === 26) return MAXH_24_26;
+        if (n === 37 || n === 38) return MAXH_37_38;
+        if (n === 39) return MAXH_39;
+        if (n >= 1 && n <= 36) return DEFAULT_MAXH_1_36;
+        return DEFAULT_MAXH_1_36;
+      }
+
+      const TABLES = {
+        "Silo 39 (Medida cm ↔ Litros)": {
+          kind: "altura_litros",
+          maxH: MAXH_39,
+          points: [
+            [16.0, 200],[20.0, 300],[24.0, 400],[30.0, 500],[36.0, 600],
+            [41.0, 700],[46.0, 800],[50.2, 900],[57.5, 1000],[69.0, 1200],
+            [79.5, 1400],[89.0, 1600],[99.5, 1800],[110.5, 2000],[124.0, 2200]
+          ]
+        },
+        "Silos 41-42 (Vacío ↔ Litros)": {
+          kind: "vacio_litros",
+          vacioPoints: [
+            [233.33,0],[230,101],[225,251],[220,402],[215,553],[210,704],[205,855],
+            [200,1006],[195,1157],[190,1307],[185,1458],[180,1609],[175,1760],
+            [170,1911],[165,2062],[160,2213],[155,2363],[150,2514],[145,2665],
+            [140,2816],[135,2967],[130,3118],[125,3269],[120,3419],[115,3570],
+            [110,3721],[105,3872],[100,4023],[95,4174],[90,4325],[85,4476],
+            [80,4626],[75,4777],[70,4928],[65,5079],[60,5230],[55,5381],
+            [50,5532],[45,5682],[40,5833],[35,5984],[30,6135],[25,6286],
+            [20,6437],[15,6588],[10,6738],[5,6889],[0,7040]
+          ]
+        },
+        "Silos 43-46 (Vacío ↔ Litros)": {
+          kind: "vacio_litros",
+          vacioPoints: [
+            [313.33,0],[310,127],[305,317],[300,507],[295,697],[290,887],[285,1077],
+            [280,1267],[275,1457],[270,1647],[265,1837],[260,2027],[255,2217],
+            [250,2408],[245,2598],[240,2788],[235,2978],[230,3168],[225,3358],
+            [220,3548],[215,3738],[210,3928],[205,4118],[200,4308],[195,4498],
+            [190,4688],[185,4878],[180,5068],[175,5259],[170,5449],[165,5639],
+            [160,5829],[155,6019],[150,6209],[145,6399],[140,6589],[135,6779],
+            [130,6969],[125,7159],[120,7349],[115,7539],[110,7729],[105,7919],
+            [100,8110],[95,8300],[90,8490],[85,8680],[80,8870],[75,9060],
+            [70,9250],[65,9440],[60,9630],[55,9820],[50,10010],[45,10200],
+            [40,10390],[35,10580],[30,10770],[25,10961],[20,11151],[15,11341],
+            [10,11531],[5,11721],[0,11911]
+          ]
+        }
+      };
+
+      const SILOS = [];
+      for (let i=1;i<=38;i++){
+        if (!FORMULAS[i]) continue;
+        SILOS.push({ key:`Silo ${i}`, kind:"linear", siloNo:i, a:FORMULAS[i].a, b:FORMULAS[i].b, maxH:maxHForSilo(i) });
+      }
+      SILOS.push({ key:"Silo 39", kind:"table_altura", tableKey:"Silo 39 (Medida cm ↔ Litros)", maxH: MAXH_39 });
+      SILOS.push({ key:"Silos 41-42", kind:"table_vacio", tableKey:"Silos 41-42 (Vacío ↔ Litros)" });
+      SILOS.push({ key:"Silos 43-46", kind:"table_vacio", tableKey:"Silos 43-46 (Vacío ↔ Litros)" });
+
+      const el = {
+        // silos calc
+        silo: document.getElementById("silo"),
+        modo: document.getElementById("modo"),
+        valor: document.getElementById("valor"),
+        valorLabel: document.getElementById("valorLabel"),
+        rango: document.getElementById("rango"),
+        siloMeta: document.getElementById("siloMeta"),
+        modoHelp: document.getElementById("modoHelp"),
+
+        btnCalcular: document.getElementById("btnCalcular"),
+        btnLimpiar: document.getElementById("btnLimpiar"),
+        btnCalcularBottom: document.getElementById("btnCalcularBottom"),
+        btnLimpiarBottom: document.getElementById("btnLimpiarBottom"),
+
+        alertError: document.getElementById("alertError"),
+
+        resultado: document.getElementById("resultado"),
+        resTitulo: document.getElementById("resTitulo"),
+        resSubtitulo: document.getElementById("resSubtitulo"),
+        outAltura: document.getElementById("outAltura"),
+        outAlturaSub: document.getElementById("outAlturaSub"),
+        outLitros: document.getElementById("outLitros"),
+        outLitrosSub: document.getElementById("outLitrosSub"),
+        outVacio: document.getElementById("outVacio"),
+        outVacioSub: document.getElementById("outVacioSub"),
+        outPct: document.getElementById("outPct"),
+        outPctSub: document.getElementById("outPctSub"),
+        toast: document.getElementById("toast"),
+
+        tablaDatos: document.getElementById("tablaDatos"),
+        historial: document.getElementById("historial"),
+        btnHistClear: document.getElementById("btnHistClear"),
+        btnHistCsv: document.getElementById("btnHistCsv"),
+        btnHistCopy: document.getElementById("btnHistCopy"),
+
+        // traslados
+        pSilo: document.getElementById("pSilo"),
+        pTipo: document.getElementById("pTipo"),
+        pIni: document.getElementById("pIni"),
+        pFin: document.getElementById("pFin"),
+        pMeta: document.getElementById("pMeta"),
+        pTipoHelp: document.getElementById("pTipoHelp"),
+
+        sSilo: document.getElementById("sSilo"),
+        sTipo: document.getElementById("sTipo"),
+        sIni: document.getElementById("sIni"),
+        sFin: document.getElementById("sFin"),
+        sMeta: document.getElementById("sMeta"),
+        sTipoHelp: document.getElementById("sTipoHelp"),
+
+        entrego: document.getElementById("entrego"),
+        btnMoveCalc: document.getElementById("btnMoveCalc"),
+        btnMoveClear: document.getElementById("btnMoveClear"),
+        moveError: document.getElementById("moveError"),
+        moveResult: document.getElementById("moveResult"),
+        moveSub: document.getElementById("moveSub"),
+        outTras: document.getElementById("outTras"),
+        outDesc: document.getElementById("outDesc"),
+        outPL: document.getElementById("outPL"),
+        outPLSub: document.getElementById("outPLSub"),
+        outSL: document.getElementById("outSL"),
+        outSLSub: document.getElementById("outSLSub"),
+        moveToast: document.getElementById("moveToast"),
+
+        anio: document.getElementById("anio"),
+      };
+
+      const nf2 = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
+      const mqMobile = window.matchMedia("(max-width: 720px)");
+
+      function parseNumber(value){
+        const s = String(value ?? "").trim().replace(/\s+/g, "").replace(",", ".");
+        if (!s) return NaN;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      function showError(msg){ el.alertError.textContent = msg; el.alertError.hidden = false; }
+      function clearError(){ el.alertError.hidden = true; el.alertError.textContent = ""; }
+      function toast(msg){ el.toast.textContent = msg; }
+
+      function showMoveError(msg){ el.moveError.textContent = msg; el.moveError.hidden = false; }
+      function clearMoveError(){ el.moveError.hidden = true; el.moveError.textContent = ""; }
+      function moveToast(msg){ el.moveToast.textContent = msg; }
+
+      function downloadFile(filename, mime, content){
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function interp(points, x, xKey, yKey){
+        const n = points.length;
+        const minX = points[0][xKey];
+        const maxX = points[n-1][xKey];
+        if (x < minX || x > maxX) return null;
+
+        for (let i=0;i<n-1;i++){
+          const x0 = points[i][xKey], x1 = points[i+1][xKey];
+          if (x >= x0 && x <= x1){
+            const y0 = points[i][yKey], y1 = points[i+1][yKey];
+            const t = (x - x0) / (x1 - x0);
+            return y0 + t*(y1-y0);
+          }
+        }
+        return null;
+      }
+
+      function modeText(mode){
+        if (mode === "altura") return "Altura → Litros";
+        if (mode === "litros") return "Litros → Altura";
+        return "Vacío → Litros";
+      }
+
+      const cacheTables = new Map();
+
+      function getTableAlturaLitros(def){
+        const key = "ALT|" + JSON.stringify(def.points) + "|" + String(def.maxH);
+        if (cacheTables.has(key)) return cacheTables.get(key);
+
+        const pts = def.points.map(([h,l]) => ({ h:Number(h), l:Number(l) })).sort((a,b)=>a.h-b.h);
+        const maxL = pts.reduce((m,p)=>Math.max(m,p.l), -Infinity);
+        const minL = pts.reduce((m,p)=>Math.min(m,p.l),  Infinity);
+        const t = {
+          pts,
+          minH: pts[0].h,
+          maxH: pts[pts.length-1].h,
+          minL,
+          maxL,
+          maxHDeclared: def.maxH || pts[pts.length-1].h,
+          count: pts.length
+        };
+        cacheTables.set(key, t);
+        return t;
+      }
+
+      function getTableVacioLitros(def){
+        const key = "VAC|" + JSON.stringify(def.vacioPoints);
+        if (cacheTables.has(key)) return cacheTables.get(key);
+
+        const vpts = def.vacioPoints.map(([v,l]) => ({ v:Number(v), l:Number(l) })).sort((a,b)=>a.v-b.v);
+        const minV = vpts[0].v, maxV = vpts[vpts.length-1].v;
+
+        const maxL = vpts.reduce((m,p)=>Math.max(m,p.l), -Infinity);
+        const minL = vpts.reduce((m,p)=>Math.min(m,p.l),  Infinity);
+
+        const t = { vpts, minV, maxV, minL, maxL, count:vpts.length };
+        cacheTables.set(key, t);
+        return t;
+      }
+
+      function getSelectedSilo(){ return SILOS[Number(el.silo.value)]; }
+
+      function getSiloCapacityInfo(s){
+        if (s.kind === "linear"){
+          const maxL = s.a*s.maxH + s.b;
+          return { maxH:s.maxH, maxL, desc:`Ecuación: L=${nf2.format(s.a)}·h+${nf2.format(s.b)} • h máx:${nf2.format(s.maxH)} cm` };
+        }
+        if (s.kind === "table_altura"){
+          const t = getTableAlturaLitros(TABLES[s.tableKey]);
+          const maxH = TABLES[s.tableKey].maxH || t.maxHDeclared;
+          return { maxH, maxL:t.maxL, desc:`Tabla: Altura↔Litros • h máx:${nf2.format(maxH)} cm` };
+        }
+        const tv = getTableVacioLitros(TABLES[s.tableKey]);
+        return { maxH:tv.maxV, maxL:tv.maxL, desc:`Tabla: Vacío↔Litros • vacío máx:${nf2.format(tv.maxV)} cm` };
+      }
+
+      function clampNonNeg(n){ return (Number.isFinite(n) && n < 0) ? 0 : n; }
+
+      function litersFromMeasure(siloObj, tipo, value){
+        if (!Number.isFinite(value)) return null;
+
+        if (siloObj.kind === "linear"){
+          const maxH = siloObj.maxH;
+          const maxL = siloObj.a*maxH + siloObj.b;
+
+          if (tipo === "litros"){
+            if (value < 0 || value > maxL) return null;
+            return value;
+          }
+          if (tipo === "altura"){
+            if (value < 0 || value > maxH) return null;
+            return clampNonNeg(siloObj.a*value + siloObj.b);
+          }
+          if (value < 0 || value > maxH) return null;
+          const h = maxH - value;
+          return clampNonNeg(siloObj.a*h + siloObj.b);
+        }
+
+        if (siloObj.kind === "table_altura"){
+          const t = getTableAlturaLitros(TABLES[siloObj.tableKey]);
+          const maxH = (TABLES[siloObj.tableKey].maxH || t.maxHDeclared);
+          const maxL = t.maxL;
+
+          if (tipo === "litros"){
+            if (value < 0 || value > maxL) return null;
+            return value;
+          }
+          if (tipo === "altura"){
+            if (value < 0 || value > maxH) return null;
+            const l = interp(t.pts, value, "h", "l");
+            return l === null ? null : clampNonNeg(l);
+          }
+          if (value < 0 || value > maxH) return null;
+          const h = maxH - value;
+          const l = interp(t.pts, h, "h", "l");
+          return l === null ? null : clampNonNeg(l);
+        }
+
+        const tv = getTableVacioLitros(TABLES[siloObj.tableKey]);
+        const maxV = tv.maxV;
+        const maxL = tv.maxL;
+
+        if (tipo === "litros"){
+          if (value < 0 || value > maxL) return null;
+          return value;
+        }
+        if (tipo === "vacio"){
+          if (value < 0 || value > maxV) return null;
+          const l = interp(tv.vpts, value, "v", "l");
+          return l === null ? null : clampNonNeg(l);
+        }
+        if (value < 0 || value > maxV) return null;
+        const empty = maxV - value;
+        const l = interp(tv.vpts, empty, "v", "l");
+        return l === null ? null : clampNonNeg(l);
+      }
+
+      function updateMeta(){
+        const s = getSelectedSilo();
+        const cap = getSiloCapacityInfo(s);
+        el.siloMeta.textContent = `${cap.desc} • Capacidad: ${nf2.format(cap.maxL)} L`;
+      }
+
+      function updateModeUI(){
+        clearError(); toast("");
+        el.valor.classList.remove("invalid");
+        const mode = el.modo.value;
+        const s = getSelectedSilo();
+        const cap = getSiloCapacityInfo(s);
+
+        if (mode === "altura"){
+          el.valorLabel.textContent = "Altura (cm)";
+          el.valor.placeholder = "Ej: 50";
+          el.modoHelp.textContent = "Escribe altura y verás el resultado al instante.";
+          el.rango.textContent = `Rango: 0–${nf2.format(cap.maxH)} cm (altura).`;
+        } else if (mode === "litros"){
+          el.valorLabel.textContent = "Litros (L)";
+          el.valor.placeholder = "Ej: 1000";
+          el.modoHelp.textContent = "Escribe litros y verás el resultado al instante.";
+          el.rango.textContent = `Rango: 0–${nf2.format(cap.maxL)} L.`;
+        } else {
+          el.valorLabel.textContent = "Vacío (cm)";
+          el.valor.placeholder = "Ej: 100";
+          el.modoHelp.textContent = "Escribe vacío y verás el resultado al instante.";
+          el.rango.textContent = `Rango: 0–${nf2.format(cap.maxH)} cm (vacío).`;
+        }
+      }
+
+      function hideResult(){
+        el.resultado.classList.remove("active");
+        el.outAltura.textContent = "—";
+        el.outLitros.textContent = "—";
+        el.outVacio.textContent = "—";
+        el.outPct.textContent = "—";
+        el.resSubtitulo.textContent = "—";
+        toast("");
+      }
+
+      function computeAndRender(mode, v, saveToHistory){
+        const s = getSelectedSilo();
+        const cap = getSiloCapacityInfo(s);
+
+        if (!Number.isFinite(v)){
+          showError("Ingresa un número válido (coma o punto).");
+          el.valor.classList.add("invalid");
+          hideResult();
+          return;
+        }
+
+        if (mode === "litros"){
+          if (v < 0 || v > cap.maxL){ showError(`Fuera de rango. Máximo: ${nf2.format(cap.maxL)} L.`); el.valor.classList.add("invalid"); hideResult(); return; }
+        } else {
+          if (v < 0 || v > cap.maxH){ showError(`Fuera de rango. Máximo: ${nf2.format(cap.maxH)} cm.`); el.valor.classList.add("invalid"); hideResult(); return; }
+        }
+
+        let litros=null, altura=null, vacio=null, note="";
+
+        if (s.kind === "linear"){
+          const maxH = s.maxH;
+          const maxL = s.a*maxH + s.b;
+          note = `Ecuación L=${nf2.format(s.a)}·h+${nf2.format(s.b)}`;
+
+          if (mode === "altura"){
+            altura = v;
+            litros = clampNonNeg(s.a*altura + s.b);
+            vacio = maxH - altura;
+          } else if (mode === "litros"){
+            litros = v;
+            altura = (litros - s.b) / s.a;
+            if (altura < 0 || altura > maxH){ showError("Litros fuera de rango para esta ecuación."); hideResult(); return; }
+            vacio = maxH - altura;
+          } else {
+            vacio = v;
+            altura = maxH - vacio;
+            litros = clampNonNeg(s.a*altura + s.b);
+          }
+
+          const pct = maxL>0 ? (litros/maxL)*100 : NaN;
+
+          el.resultado.classList.add("active");
+          el.resTitulo.textContent = `Resultado • ${s.key}`;
+          el.resSubtitulo.textContent = `Modo: ${modeText(mode)} • Entrada: ${nf2.format(v)} • ${note}.`;
+
+          el.outAltura.textContent = `${nf2.format(altura)} cm`;
+          el.outLitros.textContent = `${nf2.format(litros)} L`;
+          el.outVacio.textContent  = `${nf2.format(vacio)} cm`;
+          el.outPct.textContent    = `${nf2.format(pct)}%`;
+
+          el.outAlturaSub.textContent = "Medida/derivada";
+          el.outLitrosSub.textContent = "Resultado";
+          el.outVacioSub.textContent  = "Vacío = máx - altura";
+          el.outPctSub.textContent    = `Capacidad: ${nf2.format(maxL)} L`;
+
+          if (saveToHistory){
+            addHistoryEntry({
+              fecha: new Date().toLocaleString(),
+              silo: s.key,
+              modo: modeText(mode),
+              entrada: `${nf2.format(v)} ${mode === "litros" ? "L" : "cm"}`,
+              altura: nf2.format(altura),
+              litros: nf2.format(litros),
+              vacio: nf2.format(vacio),
+              pct: nf2.format(pct) + "%"
+            });
+            renderHistory();
+            toast("✅ Guardado.");
+          } else {
+            toast("");
+          }
+
+          saveState();
+          return;
+        }
+
+        if (s.kind === "table_altura"){
+          const t = getTableAlturaLitros(TABLES[s.tableKey]);
+          const maxH = (TABLES[s.tableKey].maxH || t.maxHDeclared);
+          const maxL = t.maxL;
+          note = "Tabla (Altura↔Litros)";
+
+          if (mode === "altura"){
+            altura = v;
+            litros = interp(t.pts, altura, "h", "l");
+            if (litros === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+            vacio = maxH - altura;
+          } else if (mode === "litros"){
+            litros = v;
+            altura = interp(t.pts, litros, "l", "h");
+            if (altura === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+            vacio = maxH - altura;
+          } else {
+            vacio = v;
+            altura = maxH - vacio;
+            litros = interp(t.pts, altura, "h", "l");
+            if (litros === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+          }
+
+          litros = clampNonNeg(litros);
+          const pct = maxL>0 ? (litros/maxL)*100 : NaN;
+
+          el.resultado.classList.add("active");
+          el.resTitulo.textContent = `Resultado • ${s.key}`;
+          el.resSubtitulo.textContent = `Modo: ${modeText(mode)} • Entrada: ${nf2.format(v)} • ${note}.`;
+
+          el.outAltura.textContent = `${nf2.format(altura)} cm`;
+          el.outLitros.textContent = `${nf2.format(litros)} L`;
+          el.outVacio.textContent  = `${nf2.format(vacio)} cm`;
+          el.outPct.textContent    = `${nf2.format(pct)}%`;
+
+          el.outAlturaSub.textContent = "Medida/derivada";
+          el.outLitrosSub.textContent = "Resultado";
+          el.outVacioSub.textContent  = "Vacío = máx - altura";
+          el.outPctSub.textContent    = `Capacidad: ${nf2.format(maxL)} L`;
+
+          if (saveToHistory){
+            addHistoryEntry({
+              fecha: new Date().toLocaleString(),
+              silo: s.key,
+              modo: modeText(mode),
+              entrada: `${nf2.format(v)} ${mode === "litros" ? "L" : "cm"}`,
+              altura: nf2.format(altura),
+              litros: nf2.format(litros),
+              vacio: nf2.format(vacio),
+              pct: nf2.format(pct) + "%"
+            });
+            renderHistory();
+            toast("✅ Guardado.");
+          } else {
+            toast("");
+          }
+
+          saveState();
+          return;
+        }
+
+        const tv = getTableVacioLitros(TABLES[s.tableKey]);
+        const maxV = tv.maxV;
+        const maxL = tv.maxL;
+        note = "Tabla (Vacío↔Litros)";
+
+        if (mode === "vacio"){
+          vacio = v;
+          litros = interp(tv.vpts, vacio, "v", "l");
+          if (litros === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+          altura = maxV - vacio;
+        } else if (mode === "altura"){
+          altura = v;
+          vacio = maxV - altura;
+          litros = interp(tv.vpts, vacio, "v", "l");
+          if (litros === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+        } else {
+          litros = v;
+          vacio = interp(tv.vpts, litros, "l", "v");
+          if (vacio === null){ showError("No se pudo interpolar (fuera de tabla)."); hideResult(); return; }
+          altura = maxV - vacio;
+        }
+
+        litros = clampNonNeg(litros);
+        const pct = maxL>0 ? (litros/maxL)*100 : NaN;
+
+        el.resultado.classList.add("active");
+        el.resTitulo.textContent = `Resultado • ${s.key}`;
+        el.resSubtitulo.textContent = `Modo: ${modeText(mode)} • Entrada: ${nf2.format(v)} • ${note}.`;
+
+        el.outAltura.textContent = `${nf2.format(altura)} cm`;
+        el.outLitros.textContent = `${nf2.format(litros)} L`;
+        el.outVacio.textContent  = `${nf2.format(vacio)} cm`;
+        el.outPct.textContent    = `${nf2.format(pct)}%`;
+
+        el.outAlturaSub.textContent = "Medida/derivada";
+        el.outLitrosSub.textContent = "Resultado";
+        el.outVacioSub.textContent  = "Vacío = máx - altura";
+        el.outPctSub.textContent    = `Capacidad: ${nf2.format(maxL)} L`;
+
+        if (saveToHistory){
+          addHistoryEntry({
+            fecha: new Date().toLocaleString(),
+            silo: s.key,
+            modo: modeText(mode),
+            entrada: `${nf2.format(v)} ${mode === "litros" ? "L" : "cm"}`,
+            altura: nf2.format(altura),
+            litros: nf2.format(litros),
+            vacio: nf2.format(vacio),
+            pct: nf2.format(pct) + "%"
+          });
+          renderHistory();
+          toast("✅ Guardado.");
+        } else {
+          toast("");
+        }
+
+        saveState();
+      }
+
+      function runCalc(saveToHistory){
+        clearError();
+        el.valor.classList.remove("invalid");
+        const mode = el.modo.value;
+        const v = parseNumber(el.valor.value);
+        computeAndRender(mode, v, saveToHistory);
+      }
+
+      function renderTable(){
+        const s = getSelectedSilo();
+        let html = "";
+
+        if (s.kind === "linear"){
+          const maxL = s.a*s.maxH + s.b;
+          html += `<div class="alert">
+            <strong>Ecuación</strong><br>
+            <span style="color:var(--muted)">L = <span style="font-family:var(--mono)">${nf2.format(s.a)}·h + ${nf2.format(s.b)}</span> • h máx: ${nf2.format(s.maxH)} cm • Capacidad aprox: ${nf2.format(maxL)} L</span>
+          </div>`;
+
+          html += `<div style="margin-top:12px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:420px;">
+            <table style="width:100%; border-collapse:collapse; min-width:560px">
+              <thead><tr style="background:var(--primary); color:#fff">
+                <th style="padding:12px">Altura (cm)</th>
+                <th style="padding:12px">Litros (L)</th>
+                <th style="padding:12px">Vacío (cm)</th>
+              </tr></thead><tbody>`;
+
+          const step = 5;
+          for (let h=0; h<=s.maxH; h+=step){
+            const l = clampNonNeg(s.a*h + s.b);
+            const vac = s.maxH - h;
+            html += `<tr>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${nf2.format(h)}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${nf2.format(l)}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${nf2.format(vac)}</td>
+            </tr>`;
+          }
+          html += `</tbody></table></div>`;
+        }
+        else if (s.kind === "table_altura"){
+          const t = getTableAlturaLitros(TABLES[s.tableKey]);
+          const maxH = (TABLES[s.tableKey].maxH || t.maxHDeclared);
+          html += `<div class="alert">
+            <strong>Tabla</strong><br>
+            <span style="color:var(--muted)">Altura (cm) ↔ Litros (L) • h máx: ${nf2.format(maxH)} cm</span>
+          </div>`;
+          html += `<div style="margin-top:12px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:420px;">
+            <table style="width:100%; border-collapse:collapse; min-width:560px">
+              <thead><tr style="background:var(--primary); color:#fff">
+                <th style="padding:12px">Altura (cm)</th>
+                <th style="padding:12px">Litros (L)</th>
+                <th style="padding:12px">Vacío (cm)</th>
+              </tr></thead><tbody>`;
+          t.pts.forEach(p=>{
+            const vac = maxH - p.h;
+            html += `<tr>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${p.h}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${p.l}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${nf2.format(vac)}</td>
+            </tr>`;
+          });
+          html += `</tbody></table></div>`;
+        }
+        else {
+          const tv = getTableVacioLitros(TABLES[s.tableKey]);
+          const maxV = tv.maxV;
+          html += `<div class="alert">
+            <strong>Tabla</strong><br>
+            <span style="color:var(--muted)">Vacío (cm) ↔ Litros (L) • (altura = ${nf2.format(maxV)} - vacío)</span>
+          </div>`;
+          html += `<div style="margin-top:12px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:420px;">
+            <table style="width:100%; border-collapse:collapse; min-width:620px">
+              <thead><tr style="background:var(--primary); color:#fff">
+                <th style="padding:12px">Vacío (cm)</th>
+                <th style="padding:12px">Altura (cm)</th>
+                <th style="padding:12px">Litros (L)</th>
+              </tr></thead><tbody>`;
+          tv.vpts.forEach(p=>{
+            const h = maxV - p.v;
+            html += `<tr>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${p.v}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${nf2.format(h)}</td>
+              <td style="padding:10px; text-align:center; border-bottom:1px solid #eef2f7">${p.l}</td>
+            </tr>`;
+          });
+          html += `</tbody></table></div>`;
+        }
+
+        el.tablaDatos.innerHTML = html;
+      }
+
+      function loadHistory(){
+        try{
+          const raw = localStorage.getItem(LS_HIST);
+          const arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        }catch{ return []; }
+      }
+      function saveHistory(arr){
+        localStorage.setItem(LS_HIST, JSON.stringify(arr.slice(0, MAX_HIST)));
+      }
+      function addHistoryEntry(entry){
+        const h = loadHistory();
+        h.unshift(entry);
+        saveHistory(h);
+      }
+
+      function renderHistory(){
+        const h = loadHistory();
+        if (!h.length){
+          el.historial.innerHTML = "<div class='alert'><strong>Sin registros</strong></div>";
+          return;
+        }
+        let html = "<div style='display:grid; gap:12px; margin-top:6px'>";
+        h.forEach(r=>{
+          html += `
+            <div style="border:1px solid var(--border); border-radius:14px; padding:12px; background:#fff">
+              <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap">
+                <div><div style="color:var(--muted); font-size:.82rem">Fecha</div><div style="font-weight:950">${r.fecha}</div></div>
+                <div><div style="color:var(--muted); font-size:.82rem">${r.silo ? "Silo" : "Movimiento"}</div><div style="font-weight:950">${r.silo || r.mov}</div></div>
+              </div>
+              <div style="margin-top:8px; color:var(--muted)"><strong>${r.modo}</strong> • Entrada: <strong>${r.entrada}</strong></div>
+              <div style="margin-top:8px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--muted)">
+                ${r.altura ? `<span>Altura: <strong>${r.altura} cm</strong></span>` : ""}
+                ${r.litros ? `<span>Litros: <strong>${r.litros} L</strong></span>` : ""}
+                ${r.vacio ? `<span>Vacío: <strong>${r.vacio} cm</strong></span>` : ""}
+                ${r.pct ? `<span>%: <strong>${r.pct}</strong></span>` : ""}
+                ${r.tras ? `<span>Trasladado: <strong>${r.tras} L</strong></span>` : ""}
+                ${r.desc ? `<span>Descargado: <strong>${r.desc} L</strong></span>` : ""}
+              </div>
+            </div>
+          `;
+        });
+        html += "</div>";
+        el.historial.innerHTML = html;
+      }
+
+      async function copyHistory(){
+        const h = loadHistory();
+        if (!h.length){ toast("No hay historial para copiar."); return; }
+        let text = "=== HISTORIAL ===\n\n";
+        for (const r of h){
+          if (r.silo){
+            text += `${r.fecha} | ${r.silo} | ${r.modo} | entrada: ${r.entrada} | altura: ${r.altura} | litros: ${r.litros} | vacío: ${r.vacio} | %: ${r.pct}\n`;
+          } else {
+            text += `${r.fecha} | ${r.mov} | ${r.modo} | Trasladado: ${r.tras} L | Descargado: ${r.desc} L\n`;
+          }
+        }
+        try{
+          if (navigator.clipboard?.writeText){
+            await navigator.clipboard.writeText(text);
+            toast("✅ Copiado.");
+            return;
+          }
+        }catch{}
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand("copy"); toast("✅ Copiado."); }
+        catch{ toast("No se pudo copiar."); }
+        finally{ ta.remove(); }
+      }
+
+      function exportHistoryCSV(){
+        const h = loadHistory();
+        if (!h.length){ toast("No hay historial para exportar."); return; }
+        const lines = ["fecha,tipo,ref,modo,entrada,altura_cm,litros,vacio_cm,porcentaje,trasladado,descargado"];
+        for (const r of h){
+          if (r.silo){
+            lines.push(`"${r.fecha}","silo","${r.silo}","${r.modo}","${r.entrada}",${r.altura || ""},${r.litros || ""},${r.vacio || ""},"${r.pct || ""}",,`);
+          } else {
+            lines.push(`"${r.fecha}","mov","${r.mov}","${r.modo}",,,,,,"",${r.tras || ""},${r.desc || ""}`);
+          }
+        }
+        const date = new Date().toISOString().slice(0,10);
+        downloadFile(`historial_silos_${date}.csv`, "text/csv;charset=utf-8", lines.join("\n"));
+        toast("CSV descargado.");
+      }
+
+      function loadState(){
+        try{
+          const raw = localStorage.getItem(LS_STATE);
+          if (!raw) return null;
+          const s = JSON.parse(raw);
+          return (s && typeof s === "object") ? s : null;
+        }catch{ return null; }
+      }
+      function saveState(){
+        const s = {
+          siloIndex: Number(el.silo.value),
+          modo: el.modo.value,
+          valor: el.valor.value,
+
+          pSilo: el.pSilo.value,
+          pTipo: el.pTipo.value,
+          pIni: el.pIni.value,
+          pFin: el.pFin.value,
+
+          sSilo: el.sSilo.value,
+          sTipo: el.sTipo.value,
+          sIni: el.sIni.value,
+          sFin: el.sFin.value,
+
+          entrego: el.entrego.value
+        };
+        localStorage.setItem(LS_STATE, JSON.stringify(s));
+      }
+
+      function clearInputs(){
+        el.valor.value = "";
+        el.valor.classList.remove("invalid");
+        clearError();
+        hideResult();
+        saveState();
+      }
+
+      function updateYear(){ el.anio.textContent = new Date().getFullYear(); }
+
+      function setDefaultTipoFor(siloObj, selectEl){
+        if (siloObj.kind === "table_vacio") selectEl.value = "vacio";
+        else selectEl.value = "altura";
+      }
+
+      function updateMoveMeta(){
+        const p = SILOS[Number(el.pSilo.value)];
+        const s = SILOS[Number(el.sSilo.value)];
+        const pCap = getSiloCapacityInfo(p);
+        const sCap = getSiloCapacityInfo(s);
+
+        el.pMeta.textContent = `Capacidad: ${nf2.format(pCap.maxL)} L`;
+        el.sMeta.textContent = `Capacidad: ${nf2.format(sCap.maxL)} L`;
+
+        el.pTipoHelp.textContent = (p.kind === "table_vacio")
+          ? "Recomendado: Vacío (cm) para este grupo."
+          : "Recomendado: Altura (cm).";
+        el.sTipoHelp.textContent = (s.kind === "table_vacio")
+          ? "Recomendado: Vacío (cm) para este grupo."
+          : "Recomendado: Altura (cm).";
+      }
+
+      function hideMoveResult(){
+        el.moveResult.classList.remove("active");
+        el.outTras.textContent = "—";
+        el.outDesc.textContent = "—";
+        el.outPL.textContent = "—";
+        el.outSL.textContent = "—";
+        el.outPLSub.textContent = "—";
+        el.outSLSub.textContent = "—";
+        el.moveSub.textContent = "—";
+        moveToast("");
+      }
+
+      function clearMoveInputs(){
+        el.pIni.value = "";
+        el.pFin.value = "";
+        el.sIni.value = "";
+        el.sFin.value = "";
+        el.entrego.value = "";
+        clearMoveError();
+        hideMoveResult();
+        saveState();
+      }
+
+      // ✅ TRASLADOS: fórmula nueva de DESCARGADO aplicada aquí
+      function runMoveCalc(){
+        clearMoveError();
+        hideMoveResult();
+
+        const pObj = SILOS[Number(el.pSilo.value)];
+        const sObj = SILOS[Number(el.sSilo.value)];
+
+        const pTipo = el.pTipo.value;
+        const sTipo = el.sTipo.value;
+
+        const pIniV = parseNumber(el.pIni.value);
+        const pFinV = parseNumber(el.pFin.value);
+        const sIniV = parseNumber(el.sIni.value);
+        const sFinV = parseNumber(el.sFin.value);
+
+        // "Se entregó" requerido aquí (si lo quieres opcional, dímelo y lo dejamos como 0)
+        const entregoV = parseNumber(el.entrego.value);
+
+        if (![pIniV,pFinV,sIniV,sFinV,entregoV].every(Number.isFinite)){
+          showMoveError("Revisa: todos los campos deben ser números (coma o punto).");
+          return;
+        }
+        if (entregoV < 0){
+          showMoveError("“Se entregó” no puede ser negativo.");
+          return;
+        }
+
+        const pIniL = litersFromMeasure(pObj, pTipo, pIniV);
+        const pFinL = litersFromMeasure(pObj, pTipo, pFinV);
+        const sIniL = litersFromMeasure(sObj, sTipo, sIniV);
+        const sFinL = litersFromMeasure(sObj, sTipo, sFinV);
+
+        if ([pIniL,pFinL,sIniL,sFinL].some(x => x === null)){
+          showMoveError("Alguna medida está fuera de rango o no se pudo convertir a litros. Verifica silo/tipo/valor.");
+          return;
+        }
+
+        const trasladado = (sFinL - sIniL) + entregoV;
+
+        let descargado = (pIniL + sIniL) - (pFinL + sFinL) + entregoV;
+
+        let warn = "";
+        if (descargado < -1e-6){
+          warn = "⚠️ Nota: dio negativo (el total final fue mayor que el inicial). Se muestra 0.";
+          descargado = 0;
+        } else if (descargado < 0){
+          descargado = 0;
+        }
+
+        el.moveResult.classList.add("active");
+        el.moveSub.textContent =
+          "Trasladado = (S fin − S ini) + entregado | Descargado = (P ini+S ini) − (P fin+S fin) + entregado";
+
+        el.outTras.textContent = `${nf2.format(trasladado)} L`;
+        el.outDesc.textContent = `${nf2.format(descargado)} L`;
+
+        el.outPL.textContent = `${nf2.format(pIniL)} → ${nf2.format(pFinL)}`;
+        el.outPLSub.textContent = `${pObj.key} (${pTipo})`;
+
+        el.outSL.textContent = `${nf2.format(sIniL)} → ${nf2.format(sFinL)}`;
+        el.outSLSub.textContent = `${sObj.key} (${sTipo})`;
+
+        moveToast(warn || "✅ Listo.");
+
+        addHistoryEntry({
+          fecha: new Date().toLocaleString(),
+          mov: `${pObj.key} → ${sObj.key}`,
+          modo: "Traslado",
+          entrada: "cm→L",
+          tras: nf2.format(trasladado),
+          desc: nf2.format(descargado)
+        });
+        renderHistory();
+
+        saveState();
+      }
+
+      function init(){
+        updateYear();
+
+        el.silo.innerHTML = SILOS.map((s, idx) => `<option value="${idx}">${s.key}</option>`).join("");
+        const opt = SILOS.map((s, idx) => `<option value="${idx}">${s.key}</option>`).join("");
+        el.pSilo.innerHTML = opt;
+        el.sSilo.innerHTML = opt;
+
+        const st = loadState();
+        if (typeof st?.siloIndex === "number" && SILOS[st.siloIndex]) el.silo.value = String(st.siloIndex);
+        if (st?.modo) el.modo.value = st.modo;
+        if (typeof st?.valor === "string") el.valor.value = st.valor;
+
+        if (st?.pSilo) el.pSilo.value = st.pSilo;
+        if (st?.sSilo) el.sSilo.value = st.sSilo;
+        if (st?.pTipo) el.pTipo.value = st.pTipo;
+        if (st?.sTipo) el.sTipo.value = st.sTipo;
+        if (typeof st?.pIni === "string") el.pIni.value = st.pIni;
+        if (typeof st?.pFin === "string") el.pFin.value = st.pFin;
+        if (typeof st?.sIni === "string") el.sIni.value = st.sIni;
+        if (typeof st?.sFin === "string") el.sFin.value = st.sFin;
+        if (typeof st?.entrego === "string") el.entrego.value = st.entrego;
+
+        if (!st?.pTipo) setDefaultTipoFor(SILOS[Number(el.pSilo.value)], el.pTipo);
+        if (!st?.sTipo) setDefaultTipoFor(SILOS[Number(el.sSilo.value)], el.sTipo);
+
+        updateMeta();
+        updateModeUI();
+        renderTable();
+        renderHistory();
+        updateMoveMeta();
+
+        if (mqMobile.matches){
+          document.getElementById("detailsTable").removeAttribute("open");
+          document.getElementById("detailsHistory").removeAttribute("open");
+        }
+
+        el.silo.addEventListener("change", () => {
+          updateMeta();
+          updateModeUI();
+          renderTable();
+          hideResult();
+          saveState();
+          if (String(el.valor.value).trim()) runCalc(false);
+        });
+
+        el.modo.addEventListener("change", () => {
+          updateModeUI();
+          hideResult();
+          saveState();
+          if (String(el.valor.value).trim()) runCalc(false);
+        });
+
+        el.valor.addEventListener("input", () => { saveState(); runCalc(false); });
+        el.valor.addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); runCalc(true); } });
+
+        el.btnCalcular.addEventListener("click", () => runCalc(true));
+        el.btnCalcularBottom.addEventListener("click", () => runCalc(true));
+        el.btnLimpiar.addEventListener("click", clearInputs);
+        el.btnLimpiarBottom.addEventListener("click", clearInputs);
+
+        el.btnHistClear.addEventListener("click", () => {
+          localStorage.removeItem(LS_HIST);
+          renderHistory();
+          toast("Historial eliminado.");
+        });
+        el.btnHistCopy.addEventListener("click", copyHistory);
+        el.btnHistCsv.addEventListener("click", exportHistoryCSV);
+
+        function onMoveChange(){ updateMoveMeta(); saveState(); }
+        el.pSilo.addEventListener("change", () => { setDefaultTipoFor(SILOS[Number(el.pSilo.value)], el.pTipo); onMoveChange(); });
+        el.sSilo.addEventListener("change", () => { setDefaultTipoFor(SILOS[Number(el.sSilo.value)], el.sTipo); onMoveChange(); });
+        el.pTipo.addEventListener("change", onMoveChange);
+        el.sTipo.addEventListener("change", onMoveChange);
+
+        [el.pIni, el.pFin, el.sIni, el.sFin, el.entrego].forEach(inp => {
+          inp.addEventListener("input", () => saveState());
+          inp.addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); runMoveCalc(); } });
+        });
+
+        el.btnMoveCalc.addEventListener("click", runMoveCalc);
+        el.btnMoveClear.addEventListener("click", clearMoveInputs);
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    })();
+  </script>
+
+  <!-- =========================
+       SCRIPT DEL CONVERTIDOR (2 y 3 COMPONENTES)
+       (Tu script original completo sigue igual; lo dejo tal como lo pegaste)
+       ========================= -->
+  <script>
+    (function(){
+      "use strict";
+
+      const el = {
+        nowName: document.getElementById("mx_nowName"),
+        tgtName: document.getElementById("mx_tgtName"),
+        nowHelp: document.getElementById("mx_nowHelp"),
+        tgtHelp: document.getElementById("mx_tgtHelp"),
+        T: document.getElementById("mx_T"),
+        C: document.getElementById("mx_C"),
+
+        btnCalc: document.getElementById("mx_btnCalc"),
+        btnClear: document.getElementById("mx_btnClear"),
+
+        err: document.getElementById("mx_err"),
+        res: document.getElementById("mx_res"),
+        title: document.getElementById("mx_title"),
+        sub: document.getElementById("mx_sub"),
+
+        outRemove: document.getElementById("mx_outRemove"),
+        outAdd: document.getElementById("mx_outAdd"),
+        outAddWho: document.getElementById("mx_outAddWho"),
+
+        addA: document.getElementById("mx_addA"),
+        addB: document.getElementById("mx_addB"),
+        addC: document.getElementById("mx_addC"),
+        addAName: document.getElementById("mx_addAName"),
+        addBName: document.getElementById("mx_addBName"),
+        addCName: document.getElementById("mx_addCName"),
+
+        outFinalT: document.getElementById("mx_outFinalT"),
+        outFinalComp: document.getElementById("mx_outFinalComp"),
+        outFinalCompSub: document.getElementById("mx_outFinalCompSub"),
+        finalA: document.getElementById("mx_finalA"),
+        finalB: document.getElementById("mx_finalB"),
+
+        steps: document.getElementById("mx_steps"),
+
+        mAddSingle: document.getElementById("mx_mAddSingle"),
+        mAddA: document.getElementById("mx_mAddA"),
+        mAddB: document.getElementById("mx_mAddB"),
+        mAddC: document.getElementById("mx_mAddC"),
+        mFinalA: document.getElementById("mx_mFinalA"),
+        mFinalB: document.getElementById("mx_mFinalB"),
+      };
+
+      const nf2 = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
+
+      function parseNumber(value){
+        const s = String(value ?? "").trim().replace(/\s+/g, "").replace(",", ".");
+        if (!s) return NaN;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      function showError(msg){ el.err.textContent = msg; el.err.hidden = false; }
+      function clearError(){ el.err.hidden = true; el.err.textContent = ""; }
+      function setInvalid(inp, yes){ inp && inp.classList.toggle("invalid", !!yes); }
+
+      function parseMix2(text){
+        const raw = String(text ?? "").trim();
+        if (!raw) return null;
+        const re = /(.+?)\s*\/\s*(.+?)\s+(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/i;
+        const m = raw.match(re);
+        if (!m) return null;
+        const aName = m[1].trim(), bName = m[2].trim();
+        const p1 = parseNumber(m[3]), p2 = parseNumber(m[4]);
+        if (![p1,p2].every(Number.isFinite)) return null;
+        const sum = p1 + p2; if (sum <= 0) return null;
+        return { kind:2, names:[aName,bName], p:[p1/sum,p2/sum], raw };
+      }
+
+      function parseMix3(text){
+        const raw = String(text ?? "").trim();
+        if (!raw) return null;
+        const re = /(.+?)\s*\/\s*(.+?)\s*\/\s*(.+?)\s+(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/i;
+        const m = raw.match(re);
+        if (!m) return null;
+        const names = [m[1].trim(), m[2].trim(), m[3].trim()];
+        const p1 = parseNumber(m[4]), p2 = parseNumber(m[5]), p3 = parseNumber(m[6]);
+        if (![p1,p2,p3].every(Number.isFinite)) return null;
+        const sum = p1+p2+p3; if (sum <= 0) return null;
+        return { kind:3, names, p:[p1/sum,p2/sum,p3/sum], raw };
+      }
+
+      function parseAny(text){ return parseMix3(text) || parseMix2(text); }
+
+      function describe(obj){
+        if (!obj) return "No pude leer. Formato: “A/B 60/40” o “A/B/C 50/30/20”.";
+        if (obj.kind === 2){
+          return `Detectado (2): A="${obj.names[0]}", B="${obj.names[1]}", %A=${nf2.format(obj.p[0]*100)}%, %B=${nf2.format(obj.p[1]*100)}%`;
+        }
+        return `Detectado (3): A="${obj.names[0]}", B="${obj.names[1]}", C="${obj.names[2]}" • %=${nf2.format(obj.p[0]*100)}/${nf2.format(obj.p[1]*100)}/${nf2.format(obj.p[2]*100)}`;
+      }
+
+      function calcOnlyAdd2(T, pNowA, pWantA, C){
+        const eps = 1e-12;
+        if (!(T > 0)) return { error: "Los litros actuales deben ser > 0." };
+        if (!(pNowA>=0 && pNowA<=1 && pWantA>=0 && pWantA<=1)) return { error: "Porcentajes inválidos." };
+
+        if (Math.abs(pWantA - pNowA) < 1e-9){
+          return { addWho:"NONE", addX:0, removeR:0, finalT:T, finalA:T*pNowA, finalB:T*(1-pNowA) };
+        }
+
+        const addWho = (pWantA > pNowA) ? "A" : "B";
+        let addX = 0;
+
+        if (addWho === "A"){
+          if (pWantA >= 1 - eps) return { error: "Objetivo 100% A no es posible si ya hay B." };
+          addX = T * (pWantA - pNowA) / (1 - pWantA);
+        } else {
+          if (pWantA <= eps) return { error: "Objetivo 0% A no es posible si ya hay A." };
+          addX = T * (pNowA - pWantA) / pWantA;
+        }
+
+        if (!(Number.isFinite(C) && C > 0)){
+          const finalT = T + addX;
+          const finalA = (addWho === "A") ? (T*pNowA + addX) : (T*pNowA);
+          return { addWho, addX, removeR:0, finalT, finalA, finalB: finalT-finalA };
+        }
+
+        if (T + addX <= C + 1e-9){
+          const finalT = T + addX;
+          const finalA = (addWho === "A") ? (T*pNowA + addX) : (T*pNowA);
+          return { addWho, addX, removeR:0, finalT, finalA, finalB: finalT-finalA };
+        }
+
+        let R = 0;
+        if (addWho === "A"){
+          if (1 - pNowA <= eps) return { error: "Si ya estás en 100% A, no puedes subir más." };
+          R = T - C * (1 - pWantA) / (1 - pNowA);
+        } else {
+          if (pNowA <= eps) return { error: "Si ya estás en 0% A, no puedes bajar más." };
+          R = T - (pWantA * C) / pNowA;
+        }
+
+        if (!Number.isFinite(R)) return { error: "No se pudo calcular con esa capacidad." };
+        if (R < 0) R = 0;
+
+        const X2 = (C - T) + R;
+        if (X2 < 0) return { error: "Capacidad inválida (menor que lo actual)." };
+
+        const finalT = C;
+        const A_after_remove = (T - R) * pNowA;
+        const finalA = (addWho === "A") ? (A_after_remove + X2) : (A_after_remove);
+        return { addWho, addX:X2, removeR:R, finalT, finalA, finalB: finalT-finalA };
+      }
+
+      function calcOnlyAdd3(T, pNow, pWant, C){
+        const eps = 1e-12;
+        if (!(T > 0)) return { error: "Los litros actuales deben ser > 0." };
+
+        const sNow = pNow[0]+pNow[1]+pNow[2];
+        const sWant = pWant[0]+pWant[1]+pWant[2];
+        if (sNow<=eps || sWant<=eps) return { error: "Porcentajes inválidos." };
+        pNow = pNow.map(x=>x/sNow);
+        pWant = pWant.map(x=>x/sWant);
+
+        if (!(Number.isFinite(C) && C > 0)){
+          let factor = 1;
+          for (let i=0;i<3;i++){
+            if (pWant[i] <= eps){
+              if (pNow[i] > 1e-9) return { error: "No se puede llegar a 0% de un componente solo adicionando." };
+              continue;
+            }
+            factor = Math.max(factor, (pNow[i] / pWant[i]));
+          }
+          const finalT = T * factor;
+          const adds = [0,0,0];
+          for (let i=0;i<3;i++){
+            const add = (pWant[i]*finalT) - (pNow[i]*T);
+            adds[i] = add < 0 ? 0 : add;
+          }
+          const finalAmounts = pWant.map(x=>x*finalT);
+          return { removeR:0, adds, finalT, finalAmounts, pWant };
+        }
+
+        if (T > C + 1e-9) return { error: "Los litros actuales no pueden ser mayores a la capacidad." };
+
+        const finalT = C;
+        const target = pWant.map(x=>x*finalT);
+
+        let R = 0;
+        for (let i=0;i<3;i++){
+          if (pNow[i] <= eps) continue;
+          const Ri = T - (target[i]/pNow[i]);
+          if (Ri > R) R = Ri;
+        }
+        if (R < 0) R = 0;
+        if (R > T + 1e-9) return { error: "No es posible con esa capacidad (toca retirar más de lo que hay)." };
+
+        const remain = pNow.map(x=>x*(T - R));
+        const adds = target.map((t,i)=> t - remain[i]);
+
+        if (adds.some(a => a < -1e-8)){
+          return { error: "No es posible con esa capacidad y esos porcentajes solo removiendo mezcla + adicionando." };
+        }
+        for (let i=0;i<3;i++) if (adds[i] < 0) adds[i] = 0;
+
+        return { removeR:R, adds, finalT, finalAmounts: target, pWant };
+      }
+
+      function toggleMode(kind){
+        const is2 = kind === 2;
+        el.mAddSingle.style.display = is2 ? "" : "none";
+        el.mAddA.style.display = is2 ? "none" : "";
+        el.mAddB.style.display = is2 ? "none" : "";
+        el.mAddC.style.display = is2 ? "none" : "";
+        el.mFinalA.style.display = is2 ? "none" : "";
+        el.mFinalB.style.display = is2 ? "none" : "";
+      }
+
+      function render(){
+        clearError();
+        [el.nowName, el.tgtName, el.T, el.C].forEach(i => setInvalid(i,false));
+        el.res.classList.remove("active");
+
+        const now = parseAny(el.nowName.value);
+        const tgt = parseAny(el.tgtName.value);
+
+        el.nowHelp.textContent = describe(now);
+        el.tgtHelp.textContent = describe(tgt);
+
+        if (!now){ setInvalid(el.nowName,true); showError("Revisa la mezcla ACTUAL. Formato: “A/B 60/40” o “A/B/C 50/30/20”."); return; }
+        if (!tgt){ setInvalid(el.tgtName,true); showError("Revisa la mezcla OBJETIVO. Formato: “A/B 60/40” o “A/B/C 50/30/20”."); return; }
+
+        if (now.kind !== tgt.kind){
+          showError("ACTUAL y OBJETIVO deben tener el mismo tipo (ambas 2 componentes o ambas 3 componentes).");
+          setInvalid(el.nowName,true); setInvalid(el.tgtName,true);
+          return;
+        }
+
+        const sameNames = now.names.length === tgt.names.length && now.names.every((n,i)=> n.toLowerCase() === tgt.names[i].toLowerCase());
+        if (!sameNames){
+          showError("Los nombres no coinciden entre ACTUAL y OBJETIVO. Deben ser la misma pareja (A/B) o trío (A/B/C) y en el mismo orden.");
+          setInvalid(el.nowName,true); setInvalid(el.tgtName,true);
+          return;
+        }
+
+        const T = parseNumber(el.T.value);
+        const C = parseNumber(el.C.value);
+
+        if (!Number.isFinite(T) || T <= 0){ setInvalid(el.T,true); showError("Los litros actuales deben ser un número > 0."); return; }
+        if (el.C.value.trim() && (!Number.isFinite(C) || C <= 0)){ setInvalid(el.C,true); showError("La capacidad debe ser un número > 0 (o dejarse vacío)."); return; }
+
+        toggleMode(now.kind);
+
+        if (now.kind === 2){
+          const pNowA = now.p[0];
+          const pWantA = tgt.p[0];
+          const r = calcOnlyAdd2(T, pNowA, pWantA, (el.C.value.trim()? C : NaN));
+          if (r.error){ showError(r.error); return; }
+
+          const addName = (r.addWho === "A") ? now.names[0] : (r.addWho === "B") ? now.names[1] : "—";
+          const pFinalA = (r.finalT > 0) ? (r.finalA / r.finalT) : 0;
+
+          el.res.classList.add("active");
+          el.title.textContent = "Resultado (2 componentes)";
+          el.sub.textContent = (el.C.value.trim() ? `Con capacidad ${nf2.format(C)} L` : "Sin límite de capacidad");
+
+          el.outRemove.textContent = `${nf2.format(r.removeR)} L`;
+          el.outAdd.textContent = `${nf2.format(r.addX)} L`;
+          el.outAddWho.textContent = (r.addWho === "NONE") ? "No necesitas agregar" : `Agregar: ${addName}`;
+
+          el.outFinalT.textContent = `${nf2.format(r.finalT)} L`;
+          el.outFinalComp.textContent = `${nf2.format(pFinalA*100)}% / ${nf2.format((1-pFinalA)*100)}%`;
+          el.outFinalCompSub.textContent = `${now.names[0]} / ${now.names[1]}`;
+
+          const steps = [];
+          if (Math.abs(pWantA - pNowA) < 1e-9){
+            steps.push(`✅ Ya estás en ${nf2.format(pWantA*100)}% / ${nf2.format((1-pWantA)*100)}%. No hay que hacer nada.`);
+          } else {
+            const wantUp = pWantA > pNowA;
+            steps.push(`📌 Actual: ${nf2.format(pNowA*100)}% ${now.names[0]} y ${nf2.format((1-pNowA)*100)}% ${now.names[1]}.`);
+            steps.push(`🎯 Objetivo: ${nf2.format(pWantA*100)}% ${now.names[0]} y ${nf2.format((1-pWantA)*100)}% ${now.names[1]}.`);
+            steps.push(`➡️ Para ${wantUp ? "SUBIR" : "BAJAR"} el % de ${now.names[0]}, agrega: <strong>${addName}</strong>.`);
+            if (r.removeR > 1e-6){
+              steps.push(`1) Saca <strong>${nf2.format(r.removeR)} L</strong> de mezcla.`);
+              steps.push(`2) Agrega <strong>${nf2.format(r.addX)} L</strong> de <strong>${addName}</strong>.`);
+              steps.push(`✅ Terminas con <strong>${nf2.format(r.finalT)} L</strong>.`);
+            } else {
+              steps.push(`Agrega <strong>${nf2.format(r.addX)} L</strong> de <strong>${addName}</strong>.`);
+              steps.push(`✅ Terminas con <strong>${nf2.format(r.finalT)} L</strong>.`);
+            }
+          }
+
+          const A = r.finalA, B = r.finalB;
+          el.steps.innerHTML = `
+            <strong>Pasos</strong><br>
+            <span style="color:var(--muted)">${steps.join("<br>")}</span>
+            <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); color:var(--muted)">
+              <strong>Detalle final:</strong><br>
+              ${now.names[0]}: <strong>${nf2.format(A)} L</strong><br>
+              ${now.names[1]}: <strong>${nf2.format(B)} L</strong>
+            </div>
+          `;
+          return;
+        }
+
+        const r3 = calcOnlyAdd3(T, now.p, tgt.p, (el.C.value.trim()? C : NaN));
+        if (r3.error){ showError(r3.error); return; }
+
+        el.res.classList.add("active");
+        el.title.textContent = "Resultado (3 componentes)";
+        el.sub.textContent = (el.C.value.trim() ? `Con capacidad ${nf2.format(C)} L` : "Sin límite de capacidad (mínimo a agregar)");
+
+        el.outRemove.textContent = `${nf2.format(r3.removeR)} L`;
+
+        el.addA.textContent = `${nf2.format(r3.adds[0])} L`;
+        el.addB.textContent = `${nf2.format(r3.adds[1])} L`;
+        el.addC.textContent = `${nf2.format(r3.adds[2])} L`;
+
+        el.addAName.textContent = now.names[0];
+        el.addBName.textContent = now.names[1];
+        el.addCName.textContent = now.names[2];
+
+        el.outFinalT.textContent = `${nf2.format(r3.finalT)} L`;
+        el.outFinalComp.textContent =
+          `${nf2.format(r3.pWant[0]*100)} / ${nf2.format(r3.pWant[1]*100)} / ${nf2.format(r3.pWant[2]*100)} %`;
+        el.outFinalCompSub.textContent = `${now.names[0]} / ${now.names[1]} / ${now.names[2]}`;
+
+        el.finalA.textContent = `${nf2.format(r3.finalAmounts[0])} L`;
+        el.finalB.textContent = `${nf2.format(r3.finalAmounts[1])} L`;
+
+        const steps3 = [];
+        if (r3.removeR > 1e-6) steps3.push(`1) Saca <strong>${nf2.format(r3.removeR)} L</strong> de mezcla (sale con el % actual).`);
+        else steps3.push(`1) No necesitas sacar mezcla.`);
+
+        const addsTxt = [];
+        if (r3.adds[0] > 1e-6) addsTxt.push(`<strong>${nf2.format(r3.adds[0])} L</strong> de ${now.names[0]}`);
+        if (r3.adds[1] > 1e-6) addsTxt.push(`<strong>${nf2.format(r3.adds[1])} L</strong> de ${now.names[1]}`);
+        if (r3.adds[2] > 1e-6) addsTxt.push(`<strong>${nf2.format(r3.adds[2])} L</strong> de ${now.names[2]}`);
+
+        steps3.push(`2) Agrega: ${addsTxt.length ? addsTxt.join(" + ") : "<strong>0 L</strong> (ya estabas en el objetivo)"}.`);
+        steps3.push(`✅ Terminas con <strong>${nf2.format(r3.finalT)} L</strong>.`);
+
+        el.steps.innerHTML = `
+          <strong>Pasos</strong><br>
+          <span style="color:var(--muted)">${steps3.join("<br>")}</span>
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); color:var(--muted)">
+            <strong>Detalle final (L):</strong><br>
+            ${now.names[0]}: <strong>${nf2.format(r3.finalAmounts[0])} L</strong><br>
+            ${now.names[1]}: <strong>${nf2.format(r3.finalAmounts[1])} L</strong><br>
+            ${now.names[2]}: <strong>${nf2.format(r3.finalAmounts[2])} L</strong>
+          </div>
+        `;
+      }
+
+      function clearAll(){
+        clearError();
+        [el.nowName, el.tgtName, el.T, el.C].forEach(i => { i.value=""; setInvalid(i,false); });
+        el.nowHelp.textContent = "—";
+        el.tgtHelp.textContent = "—";
+        el.res.classList.remove("active");
+      }
+
+      function init(){
+        const auto = () => {
+          if (el.nowName.value.trim() || el.tgtName.value.trim() || el.T.value.trim() || el.C.value.trim()){
+            render();
+          } else {
+            clearError();
+            el.res.classList.remove("active");
+            el.nowHelp.textContent = "—";
+            el.tgtHelp.textContent = "—";
+          }
+        };
+
+        [el.nowName, el.tgtName, el.T, el.C].forEach(inp => {
+          inp.addEventListener("input", auto);
+          inp.addEventListener("keydown", (e)=> { if (e.key === "Enter"){ e.preventDefault(); render(); } });
+        });
+
+        el.btnCalc.addEventListener("click", render);
+        el.btnClear.addEventListener("click", clearAll);
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    })();
+  </script>
+
+  <!-- =========================
+       SCRIPT Punto 3 (SOLO LITROS) - IDs p3_ (sin choques)
+       ========================= -->
+  <script>
+    (function(){
+      "use strict";
+
+      const el = {
+        pIniL: document.getElementById("p3_pIniL"),
+        pFinL: document.getElementById("p3_pFinL"),
+        sIniL: document.getElementById("p3_sIniL"),
+        sFinL: document.getElementById("p3_sFinL"),
+        entrego: document.getElementById("p3_entrego"),
+
+        btnCalc: document.getElementById("p3_btnCalc"),
+        btnClear: document.getElementById("p3_btnClear"),
+
+        err: document.getElementById("p3_err"),
+        res: document.getElementById("p3_res"),
+        sub: document.getElementById("p3_sub"),
+        outTras: document.getElementById("p3_outTras"),
+        outDesc: document.getElementById("p3_outDesc"),
+        outP: document.getElementById("p3_outP"),
+        outS: document.getElementById("p3_outS"),
+        toast: document.getElementById("p3_toast"),
+      };
+
+      const nf2 = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
+
+      function parseNumber(value){
+        const s = String(value ?? "").trim().replace(/\s+/g, "").replace(",", ".");
+        if (!s) return NaN;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      function showError(msg){
+        el.err.textContent = msg;
+        el.err.hidden = false;
+      }
+      function clearError(){
+        el.err.hidden = true;
+        el.err.textContent = "";
+      }
+      function hideResult(){
+        el.res.classList.remove("active");
+        el.outTras.textContent = "—";
+        el.outDesc.textContent = "—";
+        el.outP.textContent = "—";
+        el.outS.textContent = "—";
+        el.sub.textContent = "—";
+        el.toast.textContent = "";
+      }
+
+      function calc(){
+        clearError();
+        hideResult();
+
+        const pIni = parseNumber(el.pIniL.value);
+        const pFin = parseNumber(el.pFinL.value);
+        const sIni = parseNumber(el.sIniL.value);
+        const sFin = parseNumber(el.sFinL.value);
+
+        const entrego = el.entrego.value.trim() ? parseNumber(el.entrego.value) : 0;
+
+        if (![pIni,pFin,sIni,sFin,entrego].every(Number.isFinite)){
+          showError("Revisa: todos los campos deben ser números (coma o punto).");
+          return;
+        }
+        if ([pIni,pFin,sIni,sFin].some(x => x < 0)){
+          showError("Los litros no pueden ser negativos.");
+          return;
+        }
+        if (entrego < 0){
+          showError("“Se entregó” no puede ser negativo.");
+          return;
+        }
+
+        const trasladado = (sFin - sIni) + entrego;
+
+        let descargado = (pIni + sIni) - (pFin + sFin) + entrego;
+
+        let warn = "";
+        if (descargado < -1e-6){
+          warn = "⚠️ Nota: dio negativo (el total final fue mayor que el inicial). Se muestra 0.";
+          descargado = 0;
+        } else if (descargado < 0){
+          descargado = 0;
+        }
+
+        el.res.classList.add("active");
+        el.sub.textContent = "Trasladado = (S fin − S ini) + entregado | Descargado = (P ini+S ini) − (P fin+S fin) + entregado";
+
+        el.outTras.textContent = `${nf2.format(trasladado)} L`;
+        el.outDesc.textContent = `${nf2.format(descargado)} L`;
+        el.outP.textContent = `${nf2.format(pIni)} → ${nf2.format(pFin)}`;
+        el.outS.textContent = `${nf2.format(sIni)} → ${nf2.format(sFin)}`;
+        el.toast.textContent = warn || "✅ Listo.";
+      }
+
+      function clearAll(){
+        clearError();
+        [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].forEach(i => i.value = "");
+        hideResult();
+      }
+
+      function init(){
+        const auto = () => {
+          const any = [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].some(i => i.value.trim());
+          if (any) calc();
+          else { clearError(); hideResult(); }
+        };
+
+        [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].forEach(inp=>{
+          inp.addEventListener("input", auto);
+          inp.addEventListener("keydown", (e)=>{
+            if (e.key === "Enter"){ e.preventDefault(); calc(); }
+          });
+        });
+
+        el.btnCalc.addEventListener("click", calc);
+        el.btnClear.addEventListener("click", clearAll);
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    })();
+  </script>
+
+</body>
+</html>
