@@ -186,9 +186,9 @@
   <div class="container">
     <header>
       <div>
-        <h1>Medidas de Silos + Convertidor de Mezclas</h1>
+        <h1>Medidas de Silos,Calculo de Traslados y Convertidor de Mezclas </h1>
         <p class="subtitle">
-          Calcula por <strong>ecuación</strong> (silos 1–38) o por <strong>tabla</strong> (39, 41–42, 43–46).
+          Calcula por <strong>ecuación</strong> (silos 1–46) 
           Incluye <strong>Altura</strong>, <strong>Litros</strong>, <strong>Vacío</strong>, traslados y conversión de mezclas (2 y 3 componentes).
         </p>
       </div>
@@ -280,7 +280,7 @@
           <div class="summary-row">
             <div>
               <h2>2) Tabla / ecuación del silo seleccionado</h2>
-              <p class="muted">Se puede plegar para ahorrar espacio.</p>
+              <p class="muted"> Desplegar para ahorrar espacio.</p>
             </div>
             <div class="chev" aria-hidden="true"></div>
           </div>
@@ -304,9 +304,9 @@
         <div class="details-body">
 
           <div class="alert">
-            <strong>Fórmulas (actualizadas)</strong><br>
+            <strong>Fórmula</strong><br>
             <span style="color:var(--muted)">
-              Trasladado = (S final − S inicial) + Entregado<br>
+              Trasladado = (Silo secundario final − Silo secundario inicial) + Entregado<br>
               Descargado (nuevo) = (P ini + S ini) − (P fin + S fin) + Entregado
             </span>
           </div>
@@ -367,7 +367,7 @@
             <div class="field col-12">
               <label for="entrego">Se entregó (L)</label>
               <input id="entrego" type="text" inputmode="decimal" placeholder="Ej: 4500" />
-              <p class="help">Litros que salieron del secundario (ventas/consumo/producción).</p>
+              <p class="help">Litros que salieron del secundario.</p>
             </div>
           </div>
 
@@ -410,97 +410,6 @@
             <div class="help" id="moveToast" style="margin-top:12px;color:var(--muted);"></div>
           </div>
 
-        </div>
-      </details>
-
-      <!-- ======= Punto 3 • Traslados (solo litros) ======= -->
-      <details class="card" id="detailsP3" open>
-        <summary>
-          <div class="summary-row">
-            <div>
-              <h2>Punto 3 • Cálculo de litros (Traslados) — solo litros</h2>
-              <p class="muted">Entradas en litros. Calcula Trasladado y Descargado (lógica nueva).</p>
-            </div>
-            <div class="chev" aria-hidden="true"></div>
-          </div>
-        </summary>
-
-        <div class="details-body">
-          <div class="alert">
-            <strong>Fórmulas</strong><br>
-            <span style="color:var(--muted)">
-              Trasladado = (S final − S inicial) + Entregado<br>
-              Descargado (nuevo) = (P ini + S ini) − (P fin + S fin) + Entregado
-            </span>
-          </div>
-
-          <div class="grid">
-            <div class="field col-6">
-              <label for="p3_pIniL">Primario inicial (L)</label>
-              <input id="p3_pIniL" type="text" inputmode="decimal" placeholder="Ej: 12000" />
-            </div>
-            <div class="field col-6">
-              <label for="p3_pFinL">Primario final (L)</label>
-              <input id="p3_pFinL" type="text" inputmode="decimal" placeholder="Ej: 8000" />
-            </div>
-
-            <div class="field col-6">
-              <label for="p3_sIniL">Secundario inicial (L)</label>
-              <input id="p3_sIniL" type="text" inputmode="decimal" placeholder="Ej: 3000" />
-            </div>
-            <div class="field col-6">
-              <label for="p3_sFinL">Secundario final (L)</label>
-              <input id="p3_sFinL" type="text" inputmode="decimal" placeholder="Ej: 9000" />
-            </div>
-
-            <div class="field col-12">
-              <label for="p3_entrego">Se entregó (L)</label>
-              <input id="p3_entrego" type="text" inputmode="decimal" placeholder="Ej: 4500 (si vacío, toma 0)" />
-              <p class="help">Litros que salieron del secundario (ventas/consumo/producción).</p>
-            </div>
-          </div>
-
-          <div class="btns">
-            <button class="btn-primary" id="p3_btnCalc" type="button">Calcular</button>
-            <button class="btn-secondary" id="p3_btnClear" type="button">Limpiar</button>
-          </div>
-
-          <div class="alert error" id="p3_err" hidden></div>
-
-          <div class="result" id="p3_res" aria-live="polite">
-            <div class="alert ok">
-              <strong>Resultado</strong>
-              <div class="help" id="p3_sub" style="margin-top:6px;">—</div>
-            </div>
-
-            <div class="metrics">
-              <div class="metric">
-                <div class="k">Trasladado al secundario</div>
-                <div class="v" id="p3_outTras">—</div>
-                <div class="sub">L</div>
-              </div>
-
-              <div class="metric">
-                <div class="k">Descargado al primario</div>
-                <div class="v" id="p3_outDesc">—</div>
-                <div class="sub">L (lógica nueva)</div>
-              </div>
-
-              <div class="metric">
-                <div class="k">Primario (L ini → fin)</div>
-                <div class="v" id="p3_outP">—</div>
-                <div class="sub">—</div>
-              </div>
-
-              <div class="metric">
-                <div class="k">Secundario (L ini → fin)</div>
-                <div class="v" id="p3_outS">—</div>
-                <div class="sub">—</div>
-              </div>
-            </div>
-
-            <div class="help" id="p3_toast" style="margin-top:12px;color:var(--muted);"></div>
-          </div>
         </div>
       </details>
 
@@ -2081,133 +1990,6 @@
     })();
   </script>
 
-  <!-- =========================
-       SCRIPT Punto 3 (SOLO LITROS) - IDs p3_ (sin choques)
-       ========================= -->
-  <script>
-    (function(){
-      "use strict";
-
-      const el = {
-        pIniL: document.getElementById("p3_pIniL"),
-        pFinL: document.getElementById("p3_pFinL"),
-        sIniL: document.getElementById("p3_sIniL"),
-        sFinL: document.getElementById("p3_sFinL"),
-        entrego: document.getElementById("p3_entrego"),
-
-        btnCalc: document.getElementById("p3_btnCalc"),
-        btnClear: document.getElementById("p3_btnClear"),
-
-        err: document.getElementById("p3_err"),
-        res: document.getElementById("p3_res"),
-        sub: document.getElementById("p3_sub"),
-        outTras: document.getElementById("p3_outTras"),
-        outDesc: document.getElementById("p3_outDesc"),
-        outP: document.getElementById("p3_outP"),
-        outS: document.getElementById("p3_outS"),
-        toast: document.getElementById("p3_toast"),
-      };
-
-      const nf2 = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
-
-      function parseNumber(value){
-        const s = String(value ?? "").trim().replace(/\s+/g, "").replace(",", ".");
-        if (!s) return NaN;
-        const n = Number(s);
-        return Number.isFinite(n) ? n : NaN;
-      }
-
-      function showError(msg){
-        el.err.textContent = msg;
-        el.err.hidden = false;
-      }
-      function clearError(){
-        el.err.hidden = true;
-        el.err.textContent = "";
-      }
-      function hideResult(){
-        el.res.classList.remove("active");
-        el.outTras.textContent = "—";
-        el.outDesc.textContent = "—";
-        el.outP.textContent = "—";
-        el.outS.textContent = "—";
-        el.sub.textContent = "—";
-        el.toast.textContent = "";
-      }
-
-      function calc(){
-        clearError();
-        hideResult();
-
-        const pIni = parseNumber(el.pIniL.value);
-        const pFin = parseNumber(el.pFinL.value);
-        const sIni = parseNumber(el.sIniL.value);
-        const sFin = parseNumber(el.sFinL.value);
-
-        const entrego = el.entrego.value.trim() ? parseNumber(el.entrego.value) : 0;
-
-        if (![pIni,pFin,sIni,sFin,entrego].every(Number.isFinite)){
-          showError("Revisa: todos los campos deben ser números (coma o punto).");
-          return;
-        }
-        if ([pIni,pFin,sIni,sFin].some(x => x < 0)){
-          showError("Los litros no pueden ser negativos.");
-          return;
-        }
-        if (entrego < 0){
-          showError("“Se entregó” no puede ser negativo.");
-          return;
-        }
-
-        const trasladado = (sFin - sIni) + entrego;
-
-        let descargado = (pIni + sIni) - (pFin + sFin) + entrego;
-
-        let warn = "";
-        if (descargado < -1e-6){
-          warn = "⚠️ Nota: dio negativo (el total final fue mayor que el inicial). Se muestra 0.";
-          descargado = 0;
-        } else if (descargado < 0){
-          descargado = 0;
-        }
-
-        el.res.classList.add("active");
-        el.sub.textContent = "Trasladado = (S fin − S ini) + entregado | Descargado = (P ini+S ini) − (P fin+S fin) + entregado";
-
-        el.outTras.textContent = `${nf2.format(trasladado)} L`;
-        el.outDesc.textContent = `${nf2.format(descargado)} L`;
-        el.outP.textContent = `${nf2.format(pIni)} → ${nf2.format(pFin)}`;
-        el.outS.textContent = `${nf2.format(sIni)} → ${nf2.format(sFin)}`;
-        el.toast.textContent = warn || "✅ Listo.";
-      }
-
-      function clearAll(){
-        clearError();
-        [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].forEach(i => i.value = "");
-        hideResult();
-      }
-
-      function init(){
-        const auto = () => {
-          const any = [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].some(i => i.value.trim());
-          if (any) calc();
-          else { clearError(); hideResult(); }
-        };
-
-        [el.pIniL,el.pFinL,el.sIniL,el.sFinL,el.entrego].forEach(inp=>{
-          inp.addEventListener("input", auto);
-          inp.addEventListener("keydown", (e)=>{
-            if (e.key === "Enter"){ e.preventDefault(); calc(); }
-          });
-        });
-
-        el.btnCalc.addEventListener("click", calc);
-        el.btnClear.addEventListener("click", clearAll);
-      }
-
-      document.addEventListener("DOMContentLoaded", init);
-    })();
-  </script>
-
 </body>
+
 </html>
