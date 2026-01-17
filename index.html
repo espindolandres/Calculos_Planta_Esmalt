@@ -1438,84 +1438,131 @@
         saveState();
       }
 
-      // ✅ TRASLADOS: fórmula nueva de DESCARGADO aplicada aquí
-      function runMoveCalc(){
-        clearMoveError();
-        hideMoveResult();
+      //  TRASLADOS
+     function runMoveCalc(){
+  clearMoveError();
+  hideMoveResult();
 
-        const pObj = SILOS[Number(el.pSilo.value)];
-        const sObj = SILOS[Number(el.sSilo.value)];
+  const pObj = SILOS[Number(el.pSilo.value)];
+  const sObj = SILOS[Number(el.sSilo.value)];
 
-        const pTipo = el.pTipo.value;
-        const sTipo = el.sTipo.value;
+  const pTipo = el.pTipo.value;
+  const sTipo = el.sTipo.value;
 
-        const pIniV = parseNumber(el.pIni.value);
-        const pFinV = parseNumber(el.pFin.value);
-        const sIniV = parseNumber(el.sIni.value);
-        const sFinV = parseNumber(el.sFin.value);
+  // Lecturas (pueden venir vacías)
+  const pIniV = parseNumber(el.pIni.value);
+  const pFinV = parseNumber(el.pFin.value);
+  const sIniV = parseNumber(el.sIni.value);
+  const sFinV = parseNumber(el.sFin.value);
 
-        // "Se entregó" requerido aquí (si lo quieres opcional, dímelo y lo dejamos como 0)
-        const entregoV = parseNumber(el.entrego.value);
+  // ✅ "Se entregó" opcional: si está vacío => 0
+  const entregoRaw = String(el.entrego.value ?? "").trim();
+  const entregoV = entregoRaw ? parseNumber(entregoRaw) : 0;
 
-        if (![pIniV,pFinV,sIniV,sFinV,entregoV].every(Number.isFinite)){
-          showMoveError("Revisa: todos los campos deben ser números (coma o punto).");
-          return;
-        }
-        if (entregoV < 0){
-          showMoveError("“Se entregó” no puede ser negativo.");
-          return;
-        }
+  if (!Number.isFinite(entregoV) || entregoV < 0){
+    showMoveError("“Se entregó” debe ser un número válido (o dejarse vacío) y no puede ser negativo.");
+    return;
+  }
 
-        const pIniL = litersFromMeasure(pObj, pTipo, pIniV);
-        const pFinL = litersFromMeasure(pObj, pTipo, pFinV);
-        const sIniL = litersFromMeasure(sObj, sTipo, sIniV);
-        const sFinL = litersFromMeasure(sObj, sTipo, sFinV);
+  // Flags: qué tengo lleno realmente
+  const hasPrimario = Number.isFinite(pIniV) && Number.isFinite(pFinV);
+  const hasSecundario = Number.isFinite(sIniV) && Number.isFinite(sFinV);
 
-        if ([pIniL,pFinL,sIniL,sFinL].some(x => x === null)){
-          showMoveError("Alguna medida está fuera de rango o no se pudo convertir a litros. Verifica silo/tipo/valor.");
-          return;
-        }
+  if (!hasPrimario && !hasSecundario){
+    showMoveError("Ingresa al menos: Primario inicial+final o Secundario inicial+final (entregado es opcional).");
+    return;
+  }
 
-        const trasladado = (sFinL - sIniL) + entregoV;
+  // Convertir a litros SOLO lo que se vaya a usar
+  let pIniL = null, pFinL = null, sIniL = null, sFinL = null;
 
-        let descargado = (pIniL + sIniL) - (pFinL + sFinL) + entregoV;
+  if (hasPrimario){
+    pIniL = litersFromMeasure(pObj, pTipo, pIniV);
+    pFinL = litersFromMeasure(pObj, pTipo, pFinV);
+    if ([pIniL, pFinL].some(x => x === null)){
+      showMoveError("Primario: alguna medida está fuera de rango o no se pudo convertir a litros.");
+      return;
+    }
+  }
 
-        let warn = "";
-        if (descargado < -1e-6){
-          warn = "⚠️ Nota: dio negativo (el total final fue mayor que el inicial). Se muestra 0.";
-          descargado = 0;
-        } else if (descargado < 0){
-          descargado = 0;
-        }
+  if (hasSecundario){
+    sIniL = litersFromMeasure(sObj, sTipo, sIniV);
+    sFinL = litersFromMeasure(sObj, sTipo, sFinV);
+    if ([sIniL, sFinL].some(x => x === null)){
+      showMoveError("Secundario: alguna medida está fuera de rango o no se pudo convertir a litros.");
+      return;
+    }
+  }
 
-        el.moveResult.classList.add("active");
-        el.moveSub.textContent =
-          "Trasladado = (S fin − S ini) + entregado | Descargado = (P ini+S ini) − (P fin+S fin) + entregado";
+  // ✅ TRASLADOS (solo si hay datos de secundario)
+  // Trasladado = (S fin − S ini) + entregado
+  const trasladado = hasSecundario ? ((sFinL - sIniL) + entregoV) : 0;
 
-        el.outTras.textContent = `${nf2.format(trasladado)} L`;
-        el.outDesc.textContent = `${nf2.format(descargado)} L`;
+  // ✅ DESCARGA (solo si hay datos de primario)
+  // Descargado nuevo = P fin + Traslados − P ini
+  let descargado = null;
+  if (hasPrimario){
+    descargado = (pFinL + trasladado) - pIniL;
+    if (descargado < -1e-6){
+      // Si quieres que muestre negativos, dime y lo dejamos.
+      descargado = 0;
+    } else if (descargado < 0){
+      descargado = 0;
+    }
+  }
 
-        el.outPL.textContent = `${nf2.format(pIniL)} → ${nf2.format(pFinL)}`;
-        el.outPLSub.textContent = `${pObj.key} (${pTipo})`;
+  // Render
+  el.moveResult.classList.add("active");
 
-        el.outSL.textContent = `${nf2.format(sIniL)} → ${nf2.format(sFinL)}`;
-        el.outSLSub.textContent = `${sObj.key} (${sTipo})`;
+  // Subtítulo explicando la lógica que pediste
+  el.moveSub.textContent =
+    "Trasladado = (S fin − S ini) + entregado | Descargado = (P fin + Trasladado) − P ini";
 
-        moveToast(warn || "✅ Listo.");
+  // Trasladado siempre se muestra (si no hay secundario => 0)
+  el.outTras.textContent = ${nf2.format(trasladado)} L;
 
-        addHistoryEntry({
-          fecha: new Date().toLocaleString(),
-          mov: `${pObj.key} → ${sObj.key}`,
-          modo: "Traslado",
-          entrada: "cm→L",
-          tras: nf2.format(trasladado),
-          desc: nf2.format(descargado)
-        });
-        renderHistory();
+  // Descargado: si no hay primario, se deja en —
+  el.outDesc.textContent = (descargado === null) ? "—" : ${nf2.format(descargado)} L;
 
-        saveState();
-      }
+  // Detalles primario
+  if (hasPrimario){
+    el.outPL.textContent = ${nf2.format(pIniL)} → ${nf2.format(pFinL)};
+    el.outPLSub.textContent = ${pObj.key} (${pTipo});
+  } else {
+    el.outPL.textContent = "—";
+    el.outPLSub.textContent = "Primario (sin datos)";
+  }
 
+  // Detalles secundario
+  if (hasSecundario){
+    el.outSL.textContent = ${nf2.format(sIniL)} → ${nf2.format(sFinL)};
+    el.outSLSub.textContent = ${sObj.key} (${sTipo});
+  } else {
+    el.outSL.textContent = "—";
+    el.outSLSub.textContent = "Secundario (sin datos)";
+  }
+
+  // Mensaje final
+  const msg =
+    (!hasPrimario && hasSecundario) ? "✅ Traslado calculado (sin primario)." :
+    (hasPrimario && !hasSecundario) ? "✅ Descarga calculada (traslado asumido 0)." :
+    "✅ Listo.";
+
+  moveToast(msg);
+
+  // Guardar histórico SOLO si hay algo útil (al menos uno)
+  addHistoryEntry({
+    fecha: new Date().toLocaleString(),
+    mov: ${pObj.key} → ${sObj.key},
+    modo: "Traslado/Descarga",
+    entrada: "cm→L",
+    tras: nf2.format(trasladado),
+    desc: (descargado === null) ? "" : nf2.format(descargado)
+  });
+  renderHistory();
+
+  saveState();
+}
       function init(){
         updateYear();
 
@@ -1993,5 +2040,6 @@
 </body>
 
 </html>
+
 
 
